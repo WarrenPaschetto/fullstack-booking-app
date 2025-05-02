@@ -57,16 +57,16 @@ fullstack-booking-app/
 
 - [x] Create project folder: `fullstack-booking-app/`
 - [x] Create `.gitignore` in root
-- [ ] Create GitHub repo and push initial commit
+- [x] Create GitHub repo and push initial commit
 
 ---
 
 ### 🧱 Backend (Go + Turso)
 
 - [x] Create `backend/` folder
-- [ ] `cd backend && go mod init github.com/YOUR_USERNAME/fullstack-booking-app/backend`
+- [x] `cd backend && go mod init github.com/YOUR_USERNAME/fullstack-booking-app/backend`
 - [ ] Add Turso database and schema.sql
-- [ ] Create folder structure:
+- [x] Create folder structure:
   - `/cmd/main.go`
   - `/internal/auth`
   - `/internal/db`
