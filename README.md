@@ -1,5 +1,8 @@
 ![alt dynamic badge for workflow tests](https://github.com/WarrenPaschetto/fullstack-booking-app/actions/workflows/backend.yml/badge.svg?branch=main)
 
+[![codecov](https://codecov.io/gh/WarrenPaschetto/fullstack-booking-app/branch/main/graph/badge.svg)](https://codecov.io/gh/WarrenPaschetto/fullstack-booking-app)
+
+
 # Fullstack Booking App
 
 A fullstack scheduling and booking application built with:
