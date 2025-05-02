@@ -1,4 +1,4 @@
-![alt dynamic badge for workflow tests](https://github.com/WarrenPaschetto/fullstack-booking-app/actions/workflows/backend.yml/badge.svg)
+![alt dynamic badge for workflow tests](https://github.com/WarrenPaschetto/fullstack-booking-app/actions/workflows/backend.yml/badge.svg?branch=main)
 
 # Fullstack Booking App
 
