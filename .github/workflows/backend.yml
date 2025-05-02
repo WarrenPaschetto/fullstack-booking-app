@@ -51,6 +51,10 @@ jobs:
     name: Style
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -67,4 +71,4 @@ jobs:
         run: go install honnef.co/go/tools/cmd/staticcheck@latest
 
       - name: Run staticcheck
-        run: staticcheck ./backend/cmd/...
+        run: staticcheck ./...
