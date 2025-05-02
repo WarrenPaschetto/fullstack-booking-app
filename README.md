@@ -95,8 +95,8 @@ fullstack-booking-app/
 
 ### ⚙️ CI/CD
 
-- [ ] Add GitHub Actions workflow for backend (`backend.yml`)
-- [ ] Add GitHub Actions workflow for frontend (`frontend.yml`)
+- [x] Add GitHub Actions workflow for backend (`backend.yml`)
+- [x] Add GitHub Actions workflow for frontend (`frontend.yml`)
 - [ ] Deploy backend (Railway, Fly.io, etc.)
 - [ ] Deploy frontend (Vercel)
 
