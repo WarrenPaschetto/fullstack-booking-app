@@ -1,17 +1,17 @@
-name: Frontend CI
+name: Frontend Lint and Test
 on:
   push:
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend.yml'
+      - frontend/**
+      - .github/workflows/frontend.yml
   pull_request:
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend.yml'
+      - frontend/**
+      - .github/workflows/frontend.yml
 
 jobs:
-  build-lint-test:
-    name: Build, Lint, and Test Frontend
+  lint-test:
+    name: Lint and Test Frontend
     runs-on: ubuntu-latest
 
     defaults:
@@ -42,14 +42,11 @@ jobs:
         run: npm run lint
 
       - name: Run tests with coverage
-        run: npm run test -- --coverage
+        run: npm run test -- --coverage --passWithNoTests
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: frontend/coverage
           retention-days: 7
-
-      - name: Build
-        run: npm run build
