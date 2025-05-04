@@ -39,7 +39,14 @@ jobs:
         run: go mod tidy
 
       - name: Run tests
-        run: go test ./... -cover
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic 
+
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.out
+          flags: backend
+      
 
       - name: Install gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
