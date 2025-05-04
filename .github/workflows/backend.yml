@@ -40,16 +40,12 @@ jobs:
 
       - name: Run tests
         run: go test ./... -coverprofile=coverage.out -covermode=atomic 
-
-      - name: Upload backend coverage to Codecov
-        run: go test ./... -coverprofile=coverage.out -covermode=atomic
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           files: coverage.out
           flags: backend
-          name: backend-coverage
       
       - name: Install gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
