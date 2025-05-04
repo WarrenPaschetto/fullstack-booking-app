@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	godotenv.Load()
+	godotenv.Load("DATABASE_URL")
 
 	database, err := db.ConnectDB()
 	if err != nil {
