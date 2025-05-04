@@ -1,4 +1,4 @@
-name: Frontend Lint and Test
+name: Frontend CI
 on:
   push:
     paths:
