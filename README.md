@@ -72,7 +72,7 @@ fullstack-booking-app/
 
 - [x] Create `backend/` folder
 - [x] `cd backend && go mod init github.com/YOUR_USERNAME/fullstack-booking-app/backend`
-- [ ] Add Turso database and schema.sql
+- [x] Add Turso database and schema.sql
 - [x] Create folder structure:
   - `/cmd/main.go`
   - `/internal/auth`
