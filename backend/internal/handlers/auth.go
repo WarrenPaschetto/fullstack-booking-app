@@ -22,7 +22,7 @@ type RegisterResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func RegisterHandler(queries *db.Queries) http.HandlerFunc {
+func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		type response struct {
