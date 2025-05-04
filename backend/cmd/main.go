@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	godotenv.Load()
-	if err := godotenv.Load(); err != nil {
+	err := godotenv.Load()
+	if err != nil {
 		log.Println("Warning: .env file not found or could not be loaded")
 	}
 
