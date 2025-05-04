@@ -8,7 +8,10 @@ import (
 )
 
 func main() {
-	godotenv.Load("DATABASE_URL")
+	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found or could not be loaded")
+	}
 
 	database, err := db.ConnectDB()
 	if err != nil {
