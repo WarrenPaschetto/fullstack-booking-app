@@ -1,0 +1,13 @@
+mode: set
+github.com/WarrenPaschetto/fullstack-booking-app/backend/cmd/main.go:10.13,12.16 2 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/cmd/main.go:12.16,14.3 1 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/cmd/main.go:16.2,17.16 2 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/cmd/main.go:17.16,19.3 1 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/cmd/main.go:20.2,20.24 1 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db/connect.go:11.35,13.17 2 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db/connect.go:13.17,15.3 1 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db/connect.go:17.2,18.16 2 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db/connect.go:18.16,20.3 1 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db/connect.go:23.2,23.34 1 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db/connect.go:23.34,25.3 1 0
+github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db/connect.go:27.2,27.16 1 0
