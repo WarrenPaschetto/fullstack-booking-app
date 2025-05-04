@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
 func ConnectDB() (*sql.DB, error) {
@@ -14,14 +14,14 @@ func ConnectDB() (*sql.DB, error) {
 		return nil, fmt.Errorf("DATABASE_URL not set")
 	}
 
-	db, err := sql.Open("sqlite3", dbURL)
+	db, err := sql.Open("libsql", dbURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, fmt.Errorf("failed to connect to Turso database: %w", err)
 	}
 
 	// test the connection
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("database not reachable: %w", err)
+		return nil, fmt.Errorf("the Turso database not reachable: %w", err)
 	}
 
 	return db, nil
