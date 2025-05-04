@@ -1,4 +1,7 @@
 ![alt dynamic badge for workflow tests](https://github.com/WarrenPaschetto/fullstack-booking-app/actions/workflows/backend.yml/badge.svg?branch=main)
+[![codecov-backend](https://codecov.io/gh/WarrenPaschetto/fullstack-booking-app/branch/main/graph/badge.svg?flag=backend)](https://codecov.io/gh/WarrenPaschetto/fullstack-booking-app)
+
+![alt dynamic badge for workflow tests](https://github.com/WarrenPaschetto/fullstack-booking-app/actions/workflows/frontend.yml/badge.svg?branch=main)
 [![codecov](https://codecov.io/gh/WarrenPaschetto/fullstack-booking-app/branch/main/graph/badge.svg)](https://codecov.io/gh/WarrenPaschetto/fullstack-booking-app)
 
 
