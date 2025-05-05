@@ -1,7 +1,9 @@
 -- name: CreateUser :exec
-INSERT INTO users (id, created_at, updated_at, email, password_hash)
+INSERT INTO users (id, first_name, last_name, created_at, updated_at, email, password_hash)
 VALUES (
     uuid(), 
+    ?,
+    ?,
     CURRENT_TIMESTAMP, 
     CURRENT_TIMESTAMP, 
     ?,
@@ -12,7 +14,17 @@ VALUES (
 SELECT * FROM users
 WHERE email = ?;
 
+-- name: GetUserByName :many
+SELECT * FROM users
+WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?);
+
 -- name: UpdateUser :exec
 UPDATE users 
-SET email = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP
+SET first_name = ?, last_name = ?, email = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
+
+-- name: DeleteUser :exec
+DELETE FROM users WHERE id = ?;
+
+-- name: ListUsers :many
+SELECT * FROM users ORDER BY last_name ASC, first_name ASC;

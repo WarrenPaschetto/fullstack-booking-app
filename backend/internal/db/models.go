@@ -10,6 +10,8 @@ import (
 
 type Admin struct {
 	ID           interface{}
+	FirstName    string
+	LastName     string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	Email        string
@@ -27,6 +29,8 @@ type Booking struct {
 
 type User struct {
 	ID           interface{}
+	FirstName    string
+	LastName     string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	Email        string
