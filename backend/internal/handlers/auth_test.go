@@ -28,6 +28,8 @@ func (m *mockRegisterQueries) CreateUser(_ context.Context, _ db.CreateUserParam
 func (m *mockRegisterQueries) GetUserByEmail(_ context.Context, email string) (db.User, error) {
 	return db.User{
 		ID:           uuid.New().String(),
+		FirstName:    "John",
+		LastName:     "Doe",
 		Email:        email,
 		PasswordHash: "hashed-password",
 		CreatedAt:    time.Now(),
@@ -52,8 +54,10 @@ func TestRegisterHandler(t *testing.T) {
 		{
 			name: "valid registration",
 			requestBody: RegisterRequest{
-				Email:    "user@example.com",
-				Password: "strongpassword",
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
 			},
 			mockQuery:    &mockRegisterQueries{},
 			expectedCode: http.StatusCreated,
@@ -61,8 +65,10 @@ func TestRegisterHandler(t *testing.T) {
 		{
 			name: "missing email",
 			requestBody: RegisterRequest{
-				Email:    "",
-				Password: "strongpassword",
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "",
+				Password:  "strongpassword",
 			},
 			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
@@ -71,18 +77,44 @@ func TestRegisterHandler(t *testing.T) {
 		{
 			name: "missing password",
 			requestBody: RegisterRequest{
-				Email:    "user@example.com",
-				Password: "",
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "",
 			},
 			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
 		},
 		{
+			name: "missing first name",
+			requestBody: RegisterRequest{
+				FirstName: "",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+			},
+			mockQuery:        &mockRegisterQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "First and last name required",
+		},
+		{
+			name: "missing last name",
+			requestBody: RegisterRequest{
+				FirstName: "John",
+				LastName:  "",
+				Email:     "user@example.com",
+			},
+			mockQuery:        &mockRegisterQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "First and last name required",
+		},
+		{
 			name: "insert failure",
 			requestBody: RegisterRequest{
-				Email:    "user@example.com",
-				Password: "strongpassword",
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
 			},
 			mockQuery: &mockRegisterQueries{
 				shouldFailInsert: true,
