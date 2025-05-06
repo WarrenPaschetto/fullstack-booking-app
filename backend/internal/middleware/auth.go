@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type contextKey string
