@@ -54,12 +54,13 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 		}
 
 		// validate input
-		if req.Email == "" || req.Password == "" {
-			utils.RespondWithError(w, http.StatusBadRequest, "Email and password required", nil)
-			return
-		}
 		if req.FirstName == "" || req.LastName == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "First and last name required", nil)
+			return
+		}
+
+		if req.Email == "" || req.Password == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "Email and password required", nil)
 			return
 		}
 
