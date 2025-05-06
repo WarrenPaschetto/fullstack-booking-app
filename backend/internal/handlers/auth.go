@@ -3,23 +3,39 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
 
 type RegisterResponse struct {
 	ID        string    `json:"id"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
 }
 
 func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
@@ -33,13 +49,17 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 		req := RegisterRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
 			return
 		}
 
 		// validate input
 		if req.Email == "" || req.Password == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Email and password required", nil)
+			return
+		}
+		if req.FirstName == "" || req.LastName == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "First and last name required", nil)
 			return
 		}
 
@@ -52,10 +72,16 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 
 		// create user
 		err = queries.CreateUser(r.Context(), db.CreateUserParams{
+			FirstName:    req.FirstName,
+			LastName:     req.LastName,
 			Email:        req.Email,
 			PasswordHash: string(hashedPassword),
 		})
 		if err != nil {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed: users.email") {
+				utils.RespondWithError(w, http.StatusBadRequest, "Email already registered", nil)
+				return
+			}
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create user", err)
 			return
 		}
@@ -77,10 +103,62 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 		utils.RespondWithJSON(w, http.StatusCreated, response{
 			RegisterResponse: RegisterResponse{
 				ID:        idStr,
+				FirstName: user.FirstName,
+				LastName:  user.LastName,
 				Email:     user.Email,
 				CreatedAt: user.CreatedAt,
 				UpdatedAt: user.UpdatedAt,
 			},
 		})
+	}
+}
+
+func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		req := LoginRequest{}
+		err := decoder.Decode(&req)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
+			return
+		}
+
+		// validate input
+		if req.Email == "" || req.Password == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "Email and password required", nil)
+			return
+		}
+
+		user, err := queries.GetUserByEmail(r.Context(), req.Email)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid credentials", err)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials", err)
+			return
+		}
+
+		secret := os.Getenv("JWT_SECRET")
+		if secret == "" {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Missing JWT_SECRET", nil)
+			return
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"sub": user.ID,
+			"iat": jwt.NewNumericDate(time.Now()),
+			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		})
+
+		tokenString, err := token.SignedString([]byte(secret))
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to sign token", err)
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, LoginResponse{Token: tokenString})
 	}
 }

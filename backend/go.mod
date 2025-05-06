@@ -7,6 +7,8 @@ require (
 	github.com/tursodatabase/libsql-client-go v0.0.0-20240902231107-85af5b9d094d
 )
 
+require github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
+
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/coder/websocket v1.8.12 // indirect
