@@ -25,7 +25,7 @@ type BookingResponse struct {
 	UserID           uuid.UUID `json:"user_id"`
 }
 
-func CreateBookingHandler(queries *db.Queries) http.HandlerFunc {
+func CreateBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		raw := r.Context().Value(middleware.UserIDKey)
 		userID, ok := raw.(uuid.UUID)
