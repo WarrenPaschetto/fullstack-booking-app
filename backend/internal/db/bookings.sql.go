@@ -7,8 +7,9 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createBooking = `-- name: CreateBooking :exec
@@ -26,7 +27,7 @@ VALUES (
 type CreateBookingParams struct {
 	AppointmentStart time.Time
 	DurationMinutes  int64
-	UserID           interface{}
+	UserID           uuid.UUID
 }
 
 func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) error {
@@ -40,8 +41,8 @@ WHERE id = ? AND user_id = ?
 `
 
 type DeleteBookingParams struct {
-	ID     interface{}
-	UserID interface{}
+	ID     uuid.UUID
+	UserID uuid.UUID
 }
 
 func (q *Queries) DeleteBooking(ctx context.Context, arg DeleteBookingParams) error {
@@ -54,7 +55,7 @@ SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id 
 WHERE id = ?
 `
 
-func (q *Queries) GetBookingByID(ctx context.Context, id interface{}) (Booking, error) {
+func (q *Queries) GetBookingByID(ctx context.Context, id uuid.UUID) (Booking, error) {
 	row := q.db.QueryRowContext(ctx, getBookingByID, id)
 	var i Booking
 	err := row.Scan(
@@ -69,19 +70,26 @@ func (q *Queries) GetBookingByID(ctx context.Context, id interface{}) (Booking, 
 }
 
 const getOverlappingBookings = `-- name: GetOverlappingBookings :many
-SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id FROM bookings
-WHERE appointment_start < DATETIME(?, '+' || ? || ' minutes')
-AND DATETIME(appointment_start, '+' || duration_minutes || ' minutes') > ?
+SELECT
+  id,
+  created_at,
+  updated_at,
+  appointment_start,
+  duration_minutes,
+  user_id
+FROM bookings
+WHERE 
+  appointment_start < ?1
+  AND DATETIME(appointment_start, '+' || duration_minutes || ' minutes') > ?2
 `
 
 type GetOverlappingBookingsParams struct {
-	Datetime         interface{}
-	Column2          sql.NullString
-	AppointmentStart time.Time
+	NewEnd   time.Time
+	NewStart time.Time
 }
 
 func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlappingBookingsParams) ([]Booking, error) {
-	rows, err := q.db.QueryContext(ctx, getOverlappingBookings, arg.Datetime, arg.Column2, arg.AppointmentStart)
+	rows, err := q.db.QueryContext(ctx, getOverlappingBookings, arg.NewEnd, arg.NewStart)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +159,7 @@ WHERE user_id = ?
 ORDER BY appointment_start
 `
 
-func (q *Queries) ListBookingsForUser(ctx context.Context, userID interface{}) ([]Booking, error) {
+func (q *Queries) ListBookingsForUser(ctx context.Context, userID uuid.UUID) ([]Booking, error) {
 	rows, err := q.db.QueryContext(ctx, listBookingsForUser, userID)
 	if err != nil {
 		return nil, err

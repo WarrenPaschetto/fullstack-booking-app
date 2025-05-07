@@ -22,9 +22,17 @@ SELECT * From bookings
 ORDER BY appointment_start;
 
 -- name: GetOverlappingBookings :many
-SELECT * FROM bookings
-WHERE appointment_start < DATETIME(?, '+' || ? || ' minutes')
-AND DATETIME(appointment_start, '+' || duration_minutes || ' minutes') > ?;
+SELECT
+  id,
+  created_at,
+  updated_at,
+  appointment_start,
+  duration_minutes,
+  user_id
+FROM bookings
+WHERE 
+  appointment_start < :new_end
+  AND DATETIME(appointment_start, '+' || duration_minutes || ' minutes') > :new_start;
 
 -- name: GetBookingByID :one
 SELECT * FROM bookings

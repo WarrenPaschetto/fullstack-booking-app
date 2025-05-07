@@ -10,6 +10,7 @@ import (
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,7 +22,7 @@ type RegisterRequest struct {
 }
 
 type RegisterResponse struct {
-	ID        string    `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	FirstName string    `json:"first_name"`
 	LastName  string    `json:"last_name"`
 	Email     string    `json:"email"`
@@ -94,16 +95,9 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		// convert UUID to string
-		idStr, ok := user.ID.(string)
-		if !ok {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Could not convert user ID", err)
-			return
-		}
-
 		utils.RespondWithJSON(w, http.StatusCreated, response{
 			RegisterResponse: RegisterResponse{
-				ID:        idStr,
+				ID:        user.ID,
 				FirstName: user.FirstName,
 				LastName:  user.LastName,
 				Email:     user.Email,

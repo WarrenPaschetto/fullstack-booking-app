@@ -6,10 +6,12 @@ package db
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Admin struct {
-	ID           interface{}
+	ID           uuid.UUID
 	FirstName    string
 	LastName     string
 	CreatedAt    time.Time
@@ -19,16 +21,16 @@ type Admin struct {
 }
 
 type Booking struct {
-	ID               interface{}
+	ID               uuid.UUID
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	AppointmentStart time.Time
 	DurationMinutes  int64
-	UserID           interface{}
+	UserID           uuid.UUID
 }
 
 type User struct {
-	ID           interface{}
+	ID           uuid.UUID
 	FirstName    string
 	LastName     string
 	CreatedAt    time.Time
