@@ -27,7 +27,7 @@ func (m *mockRegisterQueries) CreateUser(_ context.Context, _ db.CreateUserParam
 
 func (m *mockRegisterQueries) GetUserByEmail(_ context.Context, email string) (db.User, error) {
 	return db.User{
-		ID:           uuid.New().String(),
+		ID:           uuid.New(),
 		FirstName:    "John",
 		LastName:     "Doe",
 		Email:        email,

@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func TestAuthMiddleware(t *testing.T) {
 	os.Setenv("JWT_SECRET", "testsecret")
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": "test-user-id",
+		"sub": uuid.New().String(),
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
 
@@ -34,7 +35,7 @@ func TestAuthMiddleware(t *testing.T) {
 			name:           "Valid token",
 			authHeader:     "Bearer " + tokenString,
 			expectStatus:   http.StatusOK,
-			expectContains: "user_id is: test-user-id",
+			expectContains: "user_id is: ",
 		},
 		{
 			name:         "Missing Authorization header",
@@ -52,13 +53,13 @@ func TestAuthMiddleware(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				val := r.Context().Value(UserIDKey)
-				userID, ok := val.(string)
-				if !ok || userID == "" {
+				userID, ok := val.(uuid.UUID)
+				if !ok || userID == uuid.Nil {
 					http.Error(w, "user_id missing or invalid", http.StatusUnauthorized)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("user_id is: " + userID))
+				w.Write([]byte("user_id is: " + userID.String()))
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)

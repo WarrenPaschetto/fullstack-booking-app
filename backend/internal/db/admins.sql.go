@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createAdmin = `-- name: CreateAdmin :exec
@@ -43,7 +45,7 @@ const deleteAdmin = `-- name: DeleteAdmin :exec
 DELETE FROM admins WHERE id = ?
 `
 
-func (q *Queries) DeleteAdmin(ctx context.Context, id interface{}) error {
+func (q *Queries) DeleteAdmin(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteAdmin, id)
 	return err
 }
@@ -155,7 +157,7 @@ type UpdateAdminParams struct {
 	LastName     string
 	Email        string
 	PasswordHash string
-	ID           interface{}
+	ID           uuid.UUID
 }
 
 func (q *Queries) UpdateAdmin(ctx context.Context, arg UpdateAdminParams) error {

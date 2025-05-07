@@ -8,6 +8,7 @@ import (
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type contextKey string
@@ -41,14 +42,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || claims["sub"] == nil {
+		if !ok {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid token claims", nil)
 			return
 		}
 
-		userID := claims["sub"].(string)
+		sub, ok := claims["sub"].(string)
+		if !ok || sub == "" {
+			utils.RespondWithError(w, http.StatusUnauthorized, "Missing subject claim", nil)
+			return
+		}
+		userUUID, err := uuid.Parse(sub)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid user ID format", err)
+			return
+		}
 
-		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		ctx := context.WithValue(r.Context(), UserIDKey, userUUID)
 		next.ServeHTTP(w, r.WithContext(ctx))
+
 	})
 }
