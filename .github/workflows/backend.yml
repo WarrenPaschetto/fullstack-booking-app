@@ -39,7 +39,7 @@ jobs:
         run: go mod tidy
 
       - name: Run backend tests with coverage
-        working-directory: backend
+        working-directory: backend 
         run: go test ./... -coverprofile=coverage.out -covermode=atomic 
       
       - name: Upload coverage to Codecov
