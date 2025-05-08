@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -46,7 +47,6 @@ func TestCreateBookingHandler(t *testing.T) {
 		body             []byte
 		mockOverlap      func(ctx context.Context, arg db.GetOverlappingBookingsParams) ([]db.Booking, error)
 		mockCreate       func(ctx context.Context, arg db.CreateBookingParams) error
-		mockDelete       func(ctx context.Context, arg db.DeleteBookingParams) error
 		expectStatus     int
 		expectedContains string
 	}{
@@ -60,7 +60,6 @@ func TestCreateBookingHandler(t *testing.T) {
 			mockCreate: func(_ context.Context, _ db.CreateBookingParams) error {
 				return nil
 			},
-			mockDelete:   nil,
 			expectStatus: http.StatusCreated,
 		},
 		{
@@ -69,8 +68,15 @@ func TestCreateBookingHandler(t *testing.T) {
 			body:         jsonBody,
 			mockOverlap:  nil,
 			mockCreate:   nil,
-			mockDelete:   nil,
 			expectStatus: http.StatusUnauthorized,
+		},
+		{
+			name:         "malformed request body",
+			ctxUserID:    userID,
+			body:         []byte(`{invalid json`),
+			mockOverlap:  nil,
+			mockCreate:   nil,
+			expectStatus: http.StatusInternalServerError,
 		},
 		{
 			name:      "overlapping booking",
@@ -80,7 +86,6 @@ func TestCreateBookingHandler(t *testing.T) {
 				return []db.Booking{{ID: uuid.New()}}, nil
 			},
 			mockCreate:   nil,
-			mockDelete:   nil,
 			expectStatus: http.StatusConflict,
 		},
 	}
@@ -90,7 +95,6 @@ func TestCreateBookingHandler(t *testing.T) {
 			mock := &mockBookingQueries{
 				CreateBookingFn:          tt.mockCreate,
 				GetOverlappingBookingsFn: tt.mockOverlap,
-				DeleteBookingFn:          tt.mockDelete,
 			}
 
 			handler := CreateBookingHandler(mock)
@@ -136,6 +140,29 @@ func TestDeleteBookingHandler(t *testing.T) {
 				return nil
 			},
 			expectStatus: http.StatusNoContent,
+		},
+		{
+			name:      "DB error",
+			ctxUserID: userID,
+			body:      jsonBody,
+			mockDelete: func(_ context.Context, _ db.DeleteBookingParams) error {
+				return errors.New("simulated DB error")
+			},
+			expectStatus: http.StatusInternalServerError,
+		},
+		{
+			name:         "No user ID",
+			ctxUserID:    nil,
+			body:         jsonBody,
+			mockDelete:   nil,
+			expectStatus: http.StatusUnauthorized,
+		},
+		{
+			name:         "malformed request body",
+			ctxUserID:    userID,
+			body:         []byte(`{invalid json`),
+			mockDelete:   nil,
+			expectStatus: http.StatusInternalServerError,
 		},
 	}
 
