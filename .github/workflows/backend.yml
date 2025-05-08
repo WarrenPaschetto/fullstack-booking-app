@@ -38,14 +38,18 @@ jobs:
       - name: Install dependencies
         run: go mod tidy
 
-      - name: Run tests
-        run: go test ./... -coverprofile=coverage.out -covermode=atomic 
+      - name: Run backend tests with coverage
+        working-directory: backend 
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: backend/coverage.out
           flags: backend
+          name: codecov-backend
+          fail_ci_if_error: true
       
       - name: Install gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
