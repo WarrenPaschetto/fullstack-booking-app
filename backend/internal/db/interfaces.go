@@ -12,4 +12,5 @@ type UserQuerier interface {
 type BookingQuerier interface {
 	CreateBooking(ctx context.Context, arg CreateBookingParams) error
 	GetOverlappingBookings(ctx context.Context, arg GetOverlappingBookingsParams) ([]Booking, error)
+	DeleteBooking(ctx context.Context, arg DeleteBookingParams) error
 }

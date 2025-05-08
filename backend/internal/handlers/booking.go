@@ -25,6 +25,10 @@ type BookingResponse struct {
 	UserID           uuid.UUID `json:"user_id"`
 }
 
+type DeleteBookingRequest struct {
+	ID uuid.UUID `json:"id"`
+}
+
 func CreateBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		raw := r.Context().Value(middleware.UserIDKey)
@@ -76,5 +80,40 @@ func CreateBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
 			DurationMinutes:  req.DurationMinutes,
 			UserID:           userID,
 		})
+	}
+}
+
+func DeleteBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		raw := r.Context().Value(middleware.UserIDKey)
+		userID, ok := raw.(uuid.UUID)
+		if !ok {
+			utils.RespondWithError(w, http.StatusUnauthorized, "User ID missing or not a UUID in context", nil)
+			return
+		}
+
+		decoder := json.NewDecoder(r.Body)
+		req := DeleteBookingRequest{}
+		err := decoder.Decode(&req)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
+			return
+		}
+
+		if req.ID == uuid.Nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Booking ID is required", nil)
+			return
+		}
+
+		err = queries.DeleteBooking(r.Context(), db.DeleteBookingParams{
+			ID:     req.ID,
+			UserID: userID,
+		})
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete booking", err)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
