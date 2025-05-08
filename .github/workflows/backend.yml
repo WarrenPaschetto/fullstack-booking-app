@@ -38,8 +38,9 @@ jobs:
       - name: Install dependencies
         run: go mod tidy
 
-      - name: Run tests
-        run: go test ./backend/... -coverprofile=coverage.out -covermode=atomic 
+      - name: Run backend tests with coverage
+        working-directory: backend
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic 
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
