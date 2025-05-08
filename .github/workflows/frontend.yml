@@ -42,7 +42,7 @@ jobs:
         run: npm run lint
 
       - name: Run tests with coverage
-        run: cd ~/frontend && npm run test -- --coverage --passWithNoTests
+        run: npm run test -- --coverage --passWithNoTests
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
