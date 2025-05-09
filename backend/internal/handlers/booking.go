@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
+	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/service"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -29,7 +31,13 @@ type DeleteBookingRequest struct {
 	ID uuid.UUID `json:"id"`
 }
 
-func CreateBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
+type RescheduleBookingRequest struct {
+	AppointmentStart time.Time `json:"appointment_start"`
+	DurationMinutes  int       `json:"duration_minutes"`
+	ID               uuid.UUID `json:"id"`
+}
+
+func (h *Handler) CreateBookingHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		raw := r.Context().Value(middleware.UserIDKey)
 		userID, ok := raw.(uuid.UUID)
@@ -42,48 +50,22 @@ func CreateBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
 		req := BookingRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
-			return
-		}
-
-		// Check for overlapping bookings
-		overlaps, err := queries.GetOverlappingBookings(r.Context(), db.GetOverlappingBookingsParams{
-			NewStart: req.AppointmentStart,
-			NewEnd:   req.AppointmentStart.Add(time.Duration(req.DurationMinutes) * time.Minute),
-		})
-		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to check for overlapping bookings", err)
-			return
-		}
-		if len(overlaps) > 0 {
-			utils.RespondWithError(w, http.StatusConflict, "Booking overlaps with an existing one", nil)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
 
 		id := uuid.New()
-		err = queries.CreateBooking(r.Context(), db.CreateBookingParams{
-			AppointmentStart: req.AppointmentStart,
-			DurationMinutes:  int64(req.DurationMinutes),
-			UserID:           userID,
-		})
+		booking, err := h.BookingService.CreateBooking(r.Context(), id, userID, req.AppointmentStart, req.DurationMinutes)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create booking", err)
 			return
 		}
 
-		now := time.Now()
-		utils.RespondWithJSON(w, http.StatusCreated, BookingResponse{
-			ID:               id,
-			CreatedAt:        now,
-			UpdatedAt:        now,
-			AppointmentStart: req.AppointmentStart,
-			DurationMinutes:  req.DurationMinutes,
-			UserID:           userID,
-		})
+		utils.RespondWithJSON(w, http.StatusCreated, booking)
 	}
 }
 
-func DeleteBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
+func (h *Handler) DeleteBookingHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		raw := r.Context().Value(middleware.UserIDKey)
 		userID, ok := raw.(uuid.UUID)
@@ -96,7 +78,7 @@ func DeleteBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
 		req := DeleteBookingRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
 
@@ -105,15 +87,46 @@ func DeleteBookingHandler(queries db.BookingQuerier) http.HandlerFunc {
 			return
 		}
 
-		err = queries.DeleteBooking(r.Context(), db.DeleteBookingParams{
-			ID:     req.ID,
-			UserID: userID,
-		})
-		if err != nil {
+		if err = h.BookingService.DeleteBooking(r.Context(), req.ID, userID); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete booking", err)
 			return
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (h *Handler) RescheduleBookingHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid booking ID", err)
+			return
+		}
+
+		var body struct {
+			NewStart        time.Time `json:"new_start"`
+			DurationMinutes int       `json:"duration_minutes"`
+		}
+
+		decoder := json.NewDecoder(r.Body)
+		req := RescheduleBookingRequest{}
+		err = decoder.Decode(&req)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+			return
+		}
+
+		updated, err := h.BookingService.RescheduleBooking(r.Context(), id, body.NewStart, body.DurationMinutes)
+		if errors.Is(err, service.ErrBookingConflict) {
+			utils.RespondWithError(w, http.StatusConflict, "time slot already booked", nil)
+			return
+		}
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "couldn't reschedule", err)
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, updated)
 	}
 }

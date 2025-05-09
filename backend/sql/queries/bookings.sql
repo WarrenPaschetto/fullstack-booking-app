@@ -1,16 +1,24 @@
--- name: CreateBooking :exec
+-- name: CreateBooking :one
 INSERT INTO bookings (id, created_at, updated_at, appointment_start, duration_minutes, user_id)
 VALUES (
-    uuid(),
+    ?,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP,
     ?,
     ?,
     ?
-);
+)
+RETURNING *;
+
 -- name: DeleteBooking :exec
 DELETE FROM bookings 
 WHERE id = ? AND user_id = ?;
+
+-- name: RescheduleBooking :one
+UPDATE bookings
+SET appointment_start = ?
+WHERE id = ?
+RETURNING *;
 
 -- name: ListBookingsForUser :many
 SELECT * FROM bookings

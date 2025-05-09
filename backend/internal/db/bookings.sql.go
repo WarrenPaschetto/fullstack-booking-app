@@ -12,27 +12,43 @@ import (
 	"github.com/google/uuid"
 )
 
-const createBooking = `-- name: CreateBooking :exec
+const createBooking = `-- name: CreateBooking :one
 INSERT INTO bookings (id, created_at, updated_at, appointment_start, duration_minutes, user_id)
 VALUES (
-    uuid(),
+    ?,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP,
     ?,
     ?,
     ?
 )
+RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id
 `
 
 type CreateBookingParams struct {
+	ID               uuid.UUID
 	AppointmentStart time.Time
 	DurationMinutes  int64
 	UserID           uuid.UUID
 }
 
-func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) error {
-	_, err := q.db.ExecContext(ctx, createBooking, arg.AppointmentStart, arg.DurationMinutes, arg.UserID)
-	return err
+func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error) {
+	row := q.db.QueryRowContext(ctx, createBooking,
+		arg.ID,
+		arg.AppointmentStart,
+		arg.DurationMinutes,
+		arg.UserID,
+	)
+	var i Booking
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AppointmentStart,
+		&i.DurationMinutes,
+		&i.UserID,
+	)
+	return i, err
 }
 
 const deleteBooking = `-- name: DeleteBooking :exec
@@ -187,4 +203,30 @@ func (q *Queries) ListBookingsForUser(ctx context.Context, userID uuid.UUID) ([]
 		return nil, err
 	}
 	return items, nil
+}
+
+const rescheduleBooking = `-- name: RescheduleBooking :one
+UPDATE bookings
+SET appointment_start = ?
+WHERE id = ?
+RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id
+`
+
+type RescheduleBookingParams struct {
+	AppointmentStart time.Time
+	ID               uuid.UUID
+}
+
+func (q *Queries) RescheduleBooking(ctx context.Context, arg RescheduleBookingParams) (Booking, error) {
+	row := q.db.QueryRowContext(ctx, rescheduleBooking, arg.AppointmentStart, arg.ID)
+	var i Booking
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AppointmentStart,
+		&i.DurationMinutes,
+		&i.UserID,
+	)
+	return i, err
 }
