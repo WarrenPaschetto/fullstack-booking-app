@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/handlers"
@@ -51,10 +52,19 @@ func main() {
 		port = "8080"
 	}
 
-	// 9. Start server
 	addr := ":" + port
+	// ⚙️ Create a custom server with timeouts
+	srv := &http.Server{
+		Addr:         addr,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// 9. Start server
 	log.Printf("Starting server on %s\n", addr)
-	if err := http.ListenAndServe(addr, r); err != nil {
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
