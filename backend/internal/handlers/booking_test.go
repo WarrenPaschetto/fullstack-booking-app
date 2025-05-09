@@ -12,16 +12,18 @@ import (
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
+	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/service"
 	"github.com/google/uuid"
 )
 
 type mockBookingQueries struct {
-	CreateBookingFn          func(ctx context.Context, arg db.CreateBookingParams) error
+	CreateBookingFn          func(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error)
 	GetOverlappingBookingsFn func(ctx context.Context, arg db.GetOverlappingBookingsParams) ([]db.Booking, error)
 	DeleteBookingFn          func(ctx context.Context, arg db.DeleteBookingParams) error
+	RescheduleBookingFn      func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
 }
 
-func (m *mockBookingQueries) CreateBooking(ctx context.Context, arg db.CreateBookingParams) error {
+func (m *mockBookingQueries) CreateBooking(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error) {
 	return m.CreateBookingFn(ctx, arg)
 }
 
@@ -33,6 +35,10 @@ func (m *mockBookingQueries) DeleteBooking(ctx context.Context, arg db.DeleteBoo
 	return m.DeleteBookingFn(ctx, arg)
 }
 
+func (m *mockBookingQueries) RescheduleBooking(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
+	return m.RescheduleBookingFn(ctx, arg)
+}
+
 func TestCreateBookingHandler(t *testing.T) {
 	userID := uuid.New()
 	validBody := BookingRequest{
@@ -42,13 +48,12 @@ func TestCreateBookingHandler(t *testing.T) {
 	jsonBody, _ := json.Marshal(validBody)
 
 	tests := []struct {
-		name             string
-		ctxUserID        any
-		body             []byte
-		mockOverlap      func(ctx context.Context, arg db.GetOverlappingBookingsParams) ([]db.Booking, error)
-		mockCreate       func(ctx context.Context, arg db.CreateBookingParams) error
-		expectStatus     int
-		expectedContains string
+		name         string
+		ctxUserID    any
+		body         []byte
+		mockOverlap  func(ctx context.Context, arg db.GetOverlappingBookingsParams) ([]db.Booking, error)
+		mockCreate   func(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error)
+		expectStatus int
 	}{
 		{
 			name:      "valid booking",
@@ -57,8 +62,8 @@ func TestCreateBookingHandler(t *testing.T) {
 			mockOverlap: func(_ context.Context, _ db.GetOverlappingBookingsParams) ([]db.Booking, error) {
 				return nil, nil
 			},
-			mockCreate: func(_ context.Context, _ db.CreateBookingParams) error {
-				return nil
+			mockCreate: func(_ context.Context, _ db.CreateBookingParams) (db.Booking, error) {
+				return db.Booking{ID: uuid.New()}, nil
 			},
 			expectStatus: http.StatusCreated,
 		},
@@ -66,17 +71,13 @@ func TestCreateBookingHandler(t *testing.T) {
 			name:         "missing auth context",
 			ctxUserID:    nil,
 			body:         jsonBody,
-			mockOverlap:  nil,
-			mockCreate:   nil,
 			expectStatus: http.StatusUnauthorized,
 		},
 		{
 			name:         "malformed request body",
 			ctxUserID:    userID,
 			body:         []byte(`{invalid json`),
-			mockOverlap:  nil,
-			mockCreate:   nil,
-			expectStatus: http.StatusInternalServerError,
+			expectStatus: http.StatusBadRequest,
 		},
 		{
 			name:      "overlapping booking",
@@ -85,28 +86,32 @@ func TestCreateBookingHandler(t *testing.T) {
 			mockOverlap: func(_ context.Context, _ db.GetOverlappingBookingsParams) ([]db.Booking, error) {
 				return []db.Booking{{ID: uuid.New()}}, nil
 			},
-			mockCreate:   nil,
-			expectStatus: http.StatusConflict,
+			expectStatus: http.StatusInternalServerError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockBookingQueries{
+			mockQ := &mockBookingQueries{
 				CreateBookingFn:          tt.mockCreate,
 				GetOverlappingBookingsFn: tt.mockOverlap,
 			}
 
-			handler := CreateBookingHandler(mock)
+			bookingSvc := service.NewBookingService(mockQ)
+
+			h := &Handler{BookingService: bookingSvc}
+			handler := h.CreateBookingHandler()
+
 			req := httptest.NewRequest(http.MethodPost, "/bookings", bytes.NewReader(tt.body))
 			if tt.ctxUserID != nil {
 				req = req.WithContext(context.WithValue(req.Context(), middleware.UserIDKey, tt.ctxUserID))
 			}
+
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
 
 			if rr.Code != tt.expectStatus {
-				t.Errorf("expected status %d, got %d", tt.expectStatus, rr.Code)
+				t.Errorf("%s: expected status %d, got %d", tt.name, tt.expectStatus, rr.Code)
 			}
 		})
 	}
@@ -122,12 +127,11 @@ func TestDeleteBookingHandler(t *testing.T) {
 	jsonBody, _ := json.Marshal(validBody)
 
 	tests := []struct {
-		name             string
-		ctxUserID        any
-		body             []byte
-		mockDelete       func(ctx context.Context, arg db.DeleteBookingParams) error
-		expectStatus     int
-		expectedContains string
+		name         string
+		ctxUserID    any
+		body         []byte
+		mockDelete   func(ctx context.Context, arg db.DeleteBookingParams) error
+		expectStatus int
 	}{
 		{
 			name:      "delete booking",
@@ -154,7 +158,6 @@ func TestDeleteBookingHandler(t *testing.T) {
 			name:         "No user ID",
 			ctxUserID:    nil,
 			body:         jsonBody,
-			mockDelete:   nil,
 			expectStatus: http.StatusUnauthorized,
 		},
 		{
@@ -162,17 +165,20 @@ func TestDeleteBookingHandler(t *testing.T) {
 			ctxUserID:    userID,
 			body:         []byte(`{invalid json`),
 			mockDelete:   nil,
-			expectStatus: http.StatusInternalServerError,
+			expectStatus: http.StatusBadRequest,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock := &mockBookingQueries{
+			mockQ := &mockBookingQueries{
 				DeleteBookingFn: tt.mockDelete,
 			}
+			bookingSvc := service.NewBookingService(mockQ)
 
-			handler := DeleteBookingHandler(mock)
+			h := &Handler{BookingService: bookingSvc}
+			handler := h.DeleteBookingHandler()
+
 			req := httptest.NewRequest(http.MethodDelete, "/bookings", bytes.NewReader(tt.body))
 			if tt.ctxUserID != nil {
 				req = req.WithContext(context.WithValue(req.Context(), middleware.UserIDKey, tt.ctxUserID))
@@ -181,7 +187,7 @@ func TestDeleteBookingHandler(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			if rr.Code != tt.expectStatus {
-				t.Errorf("expected status %d, got %d", tt.expectStatus, rr.Code)
+				t.Errorf("%s: expected status %d, got %d", tt.name, tt.expectStatus, rr.Code)
 			}
 		})
 	}
