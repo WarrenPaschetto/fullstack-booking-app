@@ -104,20 +104,18 @@ func (h *Handler) RescheduleBookingHandler() http.HandlerFunc {
 			return
 		}
 
-		var body struct {
-			NewStart        time.Time `json:"new_start"`
-			DurationMinutes int       `json:"duration_minutes"`
-		}
-
-		decoder := json.NewDecoder(r.Body)
-		req := RescheduleBookingRequest{}
-		err = decoder.Decode(&req)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+		var req RescheduleBookingRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "invalid request body", err)
 			return
 		}
 
-		updated, err := h.BookingService.RescheduleBooking(r.Context(), id, body.NewStart, body.DurationMinutes)
+		updated, err := h.BookingService.RescheduleBooking(
+			r.Context(),
+			id,
+			req.AppointmentStart,
+			req.DurationMinutes,
+		)
 		if errors.Is(err, service.ErrBookingConflict) {
 			utils.RespondWithError(w, http.StatusConflict, "time slot already booked", nil)
 			return
