@@ -1,2 +1,11 @@
 ignore:
-  - "backend/cmd/main.go"
+  - "backend/cmd/*"
+  - "backend/schema.sql"
+  - "backend/go.mod"
+  - "backend/go.sum"
+  - "coverage.out"
+  - ".github/workflows/*"
+  - "frontend/*"
+  - "*.md"
+  - "LICENSE"
+  - ".gitignore"
