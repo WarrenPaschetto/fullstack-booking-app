@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 )
 
 var ErrBookingConflict = errors.New("booking time slot conflict")
+var ErrBookingNotFound = errors.New("booking not found")
+var ErrNotAuthorized = errors.New("not authorized")
 
 type BookingService struct {
 	queries db.BookingQuerier
@@ -94,4 +97,23 @@ func (s *BookingService) RescheduleBooking(
 	}
 
 	return updated, nil
+}
+
+func (s *BookingService) GetBookingByID(
+	ctx context.Context,
+	bookingID, userID uuid.UUID,
+) (db.Booking, error) {
+	appt, err := s.queries.GetBookingByID(ctx, bookingID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return db.Booking{}, ErrBookingNotFound
+		}
+		return db.Booking{}, err
+	}
+
+	if appt.UserID != userID {
+		return db.Booking{}, ErrNotAuthorized
+	}
+
+	return appt, nil
 }

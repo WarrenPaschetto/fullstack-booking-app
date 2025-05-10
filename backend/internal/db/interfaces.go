@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type UserQuerier interface {
@@ -14,4 +16,5 @@ type BookingQuerier interface {
 	GetOverlappingBookings(ctx context.Context, arg GetOverlappingBookingsParams) ([]Booking, error)
 	DeleteBooking(ctx context.Context, arg DeleteBookingParams) error
 	RescheduleBooking(ctx context.Context, arg RescheduleBookingParams) (Booking, error)
+	GetBookingByID(ctx context.Context, bookingID uuid.UUID) (Booking, error)
 }
