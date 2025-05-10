@@ -38,6 +38,18 @@ func TestAuthMiddleware(t *testing.T) {
 			expectContains: "user_id is: ",
 		},
 		{
+			name:           "Missing token",
+			authHeader:     "",
+			expectStatus:   http.StatusUnauthorized,
+			expectContains: "Missing or malformed token",
+		},
+		{
+			name:           "Invalid token",
+			authHeader:     "Bearer " + "",
+			expectStatus:   http.StatusUnauthorized,
+			expectContains: "Invalid or expired token",
+		},
+		{
 			name:         "Missing Authorization header",
 			authHeader:   "",
 			expectStatus: http.StatusUnauthorized,
