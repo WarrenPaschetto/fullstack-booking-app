@@ -13,7 +13,6 @@ import (
 )
 
 func TestAuthMiddleware(t *testing.T) {
-	os.Setenv("JWT_SECRET", "testsecret")
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": uuid.New().String(),
@@ -28,41 +27,55 @@ func TestAuthMiddleware(t *testing.T) {
 	tests := []struct {
 		name           string
 		authHeader     string
+		secret         string
 		expectStatus   int
 		expectContains string
 	}{
 		{
 			name:           "Valid token",
 			authHeader:     "Bearer " + tokenString,
+			secret:         "testsecret",
 			expectStatus:   http.StatusOK,
 			expectContains: "user_id is: ",
 		},
 		{
+			name:           "Missing JWT_SECRET",
+			authHeader:     "Bearer " + tokenString,
+			secret:         "",
+			expectStatus:   http.StatusInternalServerError,
+			expectContains: "Missing JWT_SECRET",
+		},
+		{
 			name:           "Missing token",
 			authHeader:     "",
+			secret:         "testsecret",
 			expectStatus:   http.StatusUnauthorized,
 			expectContains: "Missing or malformed token",
 		},
 		{
 			name:           "Invalid token",
 			authHeader:     "Bearer " + "",
+			secret:         "testsecret",
 			expectStatus:   http.StatusUnauthorized,
 			expectContains: "Invalid or expired token",
 		},
 		{
 			name:         "Missing Authorization header",
 			authHeader:   "",
+			secret:       "testsecret",
 			expectStatus: http.StatusUnauthorized,
 		},
 		{
 			name:         "Malformed Authorization header",
 			authHeader:   "BadFormatToken",
+			secret:       "testsecret",
 			expectStatus: http.StatusUnauthorized,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			os.Setenv("JWT_SECRET", tt.secret)
 			handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				val := r.Context().Value(UserIDKey)
 				userID, ok := val.(uuid.UUID)
