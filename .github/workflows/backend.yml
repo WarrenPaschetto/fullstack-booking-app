@@ -30,8 +30,10 @@ jobs:
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          path: |
+            ~/.cache/go-build
+            ${{ github.workspace }}/backend/phg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
     
