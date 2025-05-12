@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -40,6 +42,19 @@ func TestAuthMiddleware(t *testing.T) {
 		t.Fatalf("Failed to generate token: %v", err)
 	}
 
+	rsPriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("Failed to generate RSA key: %v", err)
+	}
+	rsToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"sub": uuid.New().String(),
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+	rsString, err := rsToken.SignedString(rsPriv)
+	if err != nil {
+		t.Fatalf("Failed to sign RS256 token: %v", err)
+	}
+
 	tests := []struct {
 		name           string
 		authHeader     string
@@ -60,6 +75,13 @@ func TestAuthMiddleware(t *testing.T) {
 			secret:         "",
 			expectStatus:   http.StatusInternalServerError,
 			expectContains: "Missing JWT_SECRET",
+		},
+		{
+			name:           "Wrong signing method",
+			authHeader:     "Bearer " + rsString,
+			secret:         "testsecret",
+			expectStatus:   http.StatusUnauthorized,
+			expectContains: "Invalid or expired token",
 		},
 		{
 			name:           "Token missing subject claims",
