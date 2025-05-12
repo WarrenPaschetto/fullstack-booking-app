@@ -52,7 +52,7 @@ func TestRegisterHandler(t *testing.T) {
 		expectedContains string
 	}{
 		{
-			name: "valid registration",
+			name: "Valid registration",
 			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
@@ -63,7 +63,7 @@ func TestRegisterHandler(t *testing.T) {
 			expectedCode: http.StatusCreated,
 		},
 		{
-			name: "missing email",
+			name: "Missing email",
 			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
@@ -75,7 +75,7 @@ func TestRegisterHandler(t *testing.T) {
 			expectedContains: "Email and password required",
 		},
 		{
-			name: "missing password",
+			name: "Missing password",
 			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
@@ -87,7 +87,7 @@ func TestRegisterHandler(t *testing.T) {
 			expectedContains: "Email and password required",
 		},
 		{
-			name: "missing first name",
+			name: "Missing first name",
 			requestBody: RegisterRequest{
 				FirstName: "",
 				LastName:  "Doe",
@@ -98,7 +98,7 @@ func TestRegisterHandler(t *testing.T) {
 			expectedContains: "First and last name required",
 		},
 		{
-			name: "missing last name",
+			name: "Missing last name",
 			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "",
@@ -109,7 +109,7 @@ func TestRegisterHandler(t *testing.T) {
 			expectedContains: "First and last name required",
 		},
 		{
-			name: "insert failure",
+			name: "Insert failure",
 			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
