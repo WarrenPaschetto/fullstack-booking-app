@@ -1,6 +1,6 @@
 ignore:
   - "backend/cmd/*"
-  - "backend/internal/db/"
+  - "backend/internal/db/*"
   - "backend/schema.sql"
   - "backend/go.mod"
   - "backend/go.sum"
