@@ -18,8 +18,24 @@ func TestAuthMiddleware(t *testing.T) {
 		"sub": uuid.New().String(),
 		"exp": time.Now().Add(time.Hour).Unix(),
 	})
-
 	tokenString, err := token.SignedString([]byte("testsecret"))
+	if err != nil {
+		t.Fatalf("Failed to generate token: %v", err)
+	}
+
+	noSubToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+	noSubTokenString, err := noSubToken.SignedString([]byte("testsecret"))
+	if err != nil {
+		t.Fatalf("Failed to generate token: %v", err)
+	}
+
+	badSubToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": "not-uuid",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+	badSubTokenString, err := badSubToken.SignedString([]byte("testsecret"))
 	if err != nil {
 		t.Fatalf("Failed to generate token: %v", err)
 	}
@@ -44,6 +60,20 @@ func TestAuthMiddleware(t *testing.T) {
 			secret:         "",
 			expectStatus:   http.StatusInternalServerError,
 			expectContains: "Missing JWT_SECRET",
+		},
+		{
+			name:           "Token missing subject claims",
+			authHeader:     "Bearer " + noSubTokenString,
+			secret:         "testsecret",
+			expectStatus:   http.StatusUnauthorized,
+			expectContains: "Missing subject claim",
+		},
+		{
+			name:           "Invalid user ID format",
+			authHeader:     "Bearer " + badSubTokenString,
+			secret:         "testsecret",
+			expectStatus:   http.StatusUnauthorized,
+			expectContains: "Invalid user ID format",
 		},
 		{
 			name:           "Missing token",
