@@ -189,31 +189,35 @@ type mockUserQuerier struct {
 	GetUserByEmailFn func(ctx context.Context, email string) (db.User, error)
 }
 
-func (m *mockUserQuerier) CreateUser(_ context.Context, _ db.CreateUserParams) error {
-	return nil
+func (m *mockUserQuerier) CreateUser(ctx context.Context, p db.CreateUserParams) error {
+	return nil // unused by LoginHandler
 }
 
 func (m *mockUserQuerier) GetUserByEmail(ctx context.Context, email string) (db.User, error) {
 	return m.GetUserByEmailFn(ctx, email)
 }
+
 func TestLoginHandler(t *testing.T) {
 	plain := "plain-password"
-	hash, _ := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.MinCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("could not hash password: %v", err)
+	}
 	mockUser := db.User{
 		ID:           uuid.New(),
-		Email:        "user@example.com",
+		Email:        "email@example.com",
 		PasswordHash: string(hash),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
 
 	tests := []struct {
-		name         string
-		secret       string
-		body         any
-		mockGet      func(ctx context.Context, email string) (db.User, error)
-		wantStatus   int
-		wantContains string
+		name             string
+		secret           string
+		body             any
+		mockGet          func(ctx context.Context, email string) (db.User, error)
+		expectedCode     int
+		expectedContains string
 	}{
 		{
 			name:   "Successful login",
@@ -222,8 +226,8 @@ func TestLoginHandler(t *testing.T) {
 			mockGet: func(_ context.Context, email string) (db.User, error) {
 				return mockUser, nil
 			},
-			wantStatus:   http.StatusOK,
-			wantContains: `"token":`,
+			expectedCode:     http.StatusOK,
+			expectedContains: `"token":`,
 		},
 		{
 			name:   "Wrong password",
@@ -232,8 +236,8 @@ func TestLoginHandler(t *testing.T) {
 			mockGet: func(_ context.Context, email string) (db.User, error) {
 				return mockUser, nil
 			},
-			wantStatus:   http.StatusBadRequest,
-			wantContains: "Invalid credentials",
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "Invalid credentials",
 		},
 		{
 			name:   "Unknown email",
@@ -242,15 +246,15 @@ func TestLoginHandler(t *testing.T) {
 			mockGet: func(_ context.Context, email string) (db.User, error) {
 				return db.User{}, errors.New("sql: no rows")
 			},
-			wantStatus:   http.StatusUnauthorized,
-			wantContains: "Invalid credentials",
+			expectedCode:     http.StatusUnauthorized,
+			expectedContains: "Invalid credentials",
 		},
 		{
-			name:       "Malformed JSON",
-			secret:     "testsecret",
-			body:       `{ not json }`,
-			mockGet:    nil, // handler will fail before calling DB
-			wantStatus: http.StatusInternalServerError,
+			name:         "Malformed JSON",
+			secret:       "testsecret",
+			body:         `{ not json }`,
+			mockGet:      nil, // handler will fail before calling DB
+			expectedCode: http.StatusInternalServerError,
 		},
 	}
 
@@ -260,34 +264,28 @@ func TestLoginHandler(t *testing.T) {
 			t.Cleanup(func() { os.Setenv("JWT_SECRET", old) })
 			os.Setenv("JWT_SECRET", tt.secret)
 
-			// 1) Build handler with mock
 			mockQ := &mockUserQuerier{GetUserByEmailFn: tt.mockGet}
 			handler := LoginHandler(mockQ)
 
-			// 2) Marshal body (or raw string)
 			var buf bytes.Buffer
-			switch b := tt.body.(type) {
-			case string:
-				buf.WriteString(b)
-			default:
-				_ = json.NewEncoder(&buf).Encode(b)
+			if s, ok := tt.body.(string); ok {
+				buf.WriteString(s)
+			} else {
+				json.NewEncoder(&buf).Encode(tt.body)
 			}
 
-			// 3) Create request
 			req := httptest.NewRequest(http.MethodPost, "/login", &buf)
 			req.Header.Set("Content-Type", "application/json")
 
-			// 4) Call handler
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
 
-			// 5) Check status
-			if rr.Code != tt.wantStatus {
-				t.Fatalf("expected %d, got %d; body=%q", tt.wantStatus, rr.Code, rr.Body.String())
+			if rr.Code != tt.expectedCode {
+				t.Errorf("expected status code %d, got %d; body=%q", tt.expectedCode, rr.Code, rr.Body.String())
 			}
-			// 6) Check response body contains expected string
-			if tt.wantContains != "" && !strings.Contains(rr.Body.String(), tt.wantContains) {
-				t.Errorf("response %q does not contain %q", rr.Body.String(), tt.wantContains)
+
+			if tt.expectedContains != "" && !strings.Contains(rr.Body.String(), tt.expectedContains) {
+				t.Errorf("expected response to contain %q, got %s", tt.expectedContains, rr.Body.String())
 			}
 		})
 	}
