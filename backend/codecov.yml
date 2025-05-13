@@ -1,0 +1,12 @@
+ignore:
+  - "cmd/*"
+  - "internal/db/*"
+  - "schema.sql"
+  - "go.mod"
+  - "go.sum"
+  - "coverage.out"
+  - "~/.github/workflows/*"
+  - "~/frontend/*"
+  - "~/*.md"
+  - "~/LICENSE"
+  - "~/.gitignore"
