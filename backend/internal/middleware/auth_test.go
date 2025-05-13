@@ -127,7 +127,10 @@ func TestAuthMiddleware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			old := os.Getenv("JWT_SECRET")
+			t.Cleanup(func() { os.Setenv("JWT_SECRET", old) })
 			os.Setenv("JWT_SECRET", tt.secret)
+
 			handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				val := r.Context().Value(UserIDKey)
 				userID, ok := val.(uuid.UUID)
