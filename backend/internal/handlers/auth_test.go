@@ -250,11 +250,31 @@ func TestLoginHandler(t *testing.T) {
 			expectedContains: "Invalid credentials",
 		},
 		{
+			name:   "Missing email",
+			secret: "testsecret",
+			body:   LoginRequest{Email: "", Password: plain},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
+			},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "Email and password required",
+		},
+		{
 			name:         "Malformed JSON",
 			secret:       "testsecret",
 			body:         `{ not json }`,
 			mockGet:      nil, // handler will fail before calling DB
 			expectedCode: http.StatusInternalServerError,
+		},
+		{
+			name:   "Missing JWT_SECRET",
+			secret: "",
+			body:   LoginRequest{Email: mockUser.Email, Password: plain},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
+			},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Missing JWT_SECRET",
 		},
 	}
 
