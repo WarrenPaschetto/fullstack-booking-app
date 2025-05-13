@@ -1,5 +1,5 @@
 ignore:
-  - "backend/cmd/*"
+  - "backend/cmd/main.go"
   - "backend/internal/db/*"
   - "backend/schema.sql"
   - "backend/go.mod"
