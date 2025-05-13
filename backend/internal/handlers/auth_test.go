@@ -20,16 +20,25 @@ import (
 type mockRegisterQueries struct {
 	db.Queries
 	shouldFailInsert bool
+	shouldFailFetch  bool
 }
 
-func (m *mockRegisterQueries) CreateUser(_ context.Context, _ db.CreateUserParams) error {
+func (m *mockRegisterQueries) CreateUser(_ context.Context, user db.CreateUserParams) error {
+	if user.Email == usedEmail {
+		return errors.New("UNIQUE constraint failed: users.email")
+	}
 	if m.shouldFailInsert {
 		return errInsertFailed
 	}
 	return nil
 }
 
+var usedEmail = "usedEmail@email.com"
+
 func (m *mockRegisterQueries) GetUserByEmail(_ context.Context, email string) (db.User, error) {
+	if m.shouldFailFetch {
+		return db.User{}, errors.New("Unable to fetch new user")
+	}
 	return db.User{
 		ID:           uuid.New(),
 		FirstName:    "John",
@@ -126,6 +135,32 @@ func TestRegisterHandler(t *testing.T) {
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Failed to create user",
 		},
+		{
+			name: "Email already registered",
+			requestBody: RegisterRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     usedEmail,
+				Password:  "strongpassword",
+			},
+			mockQuery:        &mockRegisterQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "Email already registered",
+		},
+		{
+			name: "Unable to retrieve new user",
+			requestBody: RegisterRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockQuery: &mockRegisterQueries{
+				shouldFailFetch: true,
+			},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Unable to fetch new user",
+		},
 	}
 
 	for _, tt := range tests {
@@ -181,7 +216,7 @@ func TestLoginHandler(t *testing.T) {
 		wantContains string
 	}{
 		{
-			name:   "successful login",
+			name:   "Successful login",
 			secret: "testsecret",
 			body:   LoginRequest{Email: mockUser.Email, Password: plain},
 			mockGet: func(_ context.Context, email string) (db.User, error) {
@@ -191,7 +226,7 @@ func TestLoginHandler(t *testing.T) {
 			wantContains: `"token":`,
 		},
 		{
-			name:   "wrong password",
+			name:   "Wrong password",
 			secret: "testsecret",
 			body:   LoginRequest{Email: mockUser.Email, Password: "wrongpass"},
 			mockGet: func(_ context.Context, email string) (db.User, error) {
@@ -201,7 +236,7 @@ func TestLoginHandler(t *testing.T) {
 			wantContains: "Invalid credentials",
 		},
 		{
-			name:   "unknown email",
+			name:   "Unknown email",
 			secret: "testsecret",
 			body:   LoginRequest{Email: "no@one.com", Password: "irrelevant"},
 			mockGet: func(_ context.Context, email string) (db.User, error) {
@@ -211,7 +246,7 @@ func TestLoginHandler(t *testing.T) {
 			wantContains: "Invalid credentials",
 		},
 		{
-			name:       "malformed JSON",
+			name:       "Malformed JSON",
 			secret:     "testsecret",
 			body:       `{ not json }`,
 			mockGet:    nil, // handler will fail before calling DB
