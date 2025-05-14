@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ type fakeBookingRepo struct {
 	createErr           error
 	DeleteBookingFn     func(ctx context.Context, arg db.DeleteBookingParams) error
 	RescheduleBookingFn func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
+	GetBookingByIDFn    func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
 }
 
 func (f *fakeBookingRepo) CreateBooking(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error) {
@@ -36,7 +38,7 @@ func (f *fakeBookingRepo) RescheduleBooking(ctx context.Context, arg db.Reschedu
 }
 
 func (f *fakeBookingRepo) GetBookingByID(ctx context.Context, bookingID uuid.UUID) (db.Booking, error) {
-	return db.Booking{}, nil
+	return f.GetBookingByIDFn(ctx, bookingID)
 }
 
 var errSimulatedOverlap = errors.New("simulated error")
@@ -262,6 +264,84 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 			}
 
 			if got.ID != tt.wantBooking.ID ||
+				!got.AppointmentStart.Equal(tt.wantBooking.AppointmentStart) ||
+				got.DurationMinutes != tt.wantBooking.DurationMinutes {
+				t.Errorf("got %+v, want %+v", got, tt.wantBooking)
+			}
+
+		})
+	}
+}
+
+func TestBookingService_GetBookingByID(t *testing.T) {
+	now := time.Date(2025, 5, 14, 10, 0, 0, 0, time.UTC)
+	bookingID := uuid.New()
+	userID := uuid.New()
+	wrongUser := uuid.New()
+
+	tests := []struct {
+		name        string
+		mockGetBook func(ctx context.Context, id uuid.UUID) (db.Booking, error)
+		wantBooking db.Booking
+		wantErr     error
+	}{
+		{
+			name: "Success",
+			mockGetBook: func(_ context.Context, id uuid.UUID) (db.Booking, error) {
+				return db.Booking{
+					ID:               id,
+					UserID:           userID,
+					AppointmentStart: now,
+					DurationMinutes:  int64(45),
+				}, nil
+			},
+			wantBooking: db.Booking{ID: bookingID, UserID: userID, AppointmentStart: now, DurationMinutes: 45},
+			wantErr:     nil,
+		},
+		{
+			name: "Booking not found",
+			mockGetBook: func(_ context.Context, _ uuid.UUID) (db.Booking, error) {
+				return db.Booking{}, sql.ErrNoRows
+			},
+			wantErr: ErrBookingNotFound,
+		},
+		{
+			name: "Not an authorized user",
+			mockGetBook: func(_ context.Context, id uuid.UUID) (db.Booking, error) {
+				return db.Booking{
+					ID:               id,
+					UserID:           wrongUser,
+					AppointmentStart: now,
+					DurationMinutes:  int64(45),
+				}, nil
+			},
+			wantErr: ErrNotAuthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &fakeBookingRepo{
+				GetBookingByIDFn: tt.mockGetBook,
+			}
+
+			svc := NewBookingService(repo)
+			got, err := svc.GetBookingByID(context.Background(), bookingID, userID)
+
+			if tt.wantErr != nil {
+				if err == nil {
+					t.Fatalf("expected error %v, got nil", tt.wantErr)
+				}
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("expected error %v, got %v", tt.wantErr, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got.ID != tt.wantBooking.ID ||
+				got.UserID != tt.wantBooking.UserID ||
 				!got.AppointmentStart.Equal(tt.wantBooking.AppointmentStart) ||
 				got.DurationMinutes != tt.wantBooking.DurationMinutes {
 				t.Errorf("got %+v, want %+v", got, tt.wantBooking)
