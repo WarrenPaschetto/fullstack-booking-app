@@ -12,13 +12,14 @@ import (
 )
 
 type fakeBookingRepo struct {
-	overlaps            []db.Booking
-	overlapErr          error
-	created             db.Booking
-	createErr           error
-	DeleteBookingFn     func(ctx context.Context, arg db.DeleteBookingParams) error
-	RescheduleBookingFn func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
-	GetBookingByIDFn    func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
+	overlaps              []db.Booking
+	overlapErr            error
+	created               db.Booking
+	createErr             error
+	DeleteBookingFn       func(ctx context.Context, arg db.DeleteBookingParams) error
+	RescheduleBookingFn   func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
+	GetBookingByIDFn      func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
+	ListBookingsForUserFn func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
 }
 
 func (f *fakeBookingRepo) CreateBooking(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error) {
@@ -39,6 +40,9 @@ func (f *fakeBookingRepo) RescheduleBooking(ctx context.Context, arg db.Reschedu
 
 func (f *fakeBookingRepo) GetBookingByID(ctx context.Context, bookingID uuid.UUID) (db.Booking, error) {
 	return f.GetBookingByIDFn(ctx, bookingID)
+}
+func (f *fakeBookingRepo) ListBookingsForUser(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
+	return f.ListBookingsForUserFn(ctx, id)
 }
 
 var errSimulatedOverlap = errors.New("simulated error")
