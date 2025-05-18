@@ -433,6 +433,14 @@ func TestListUserBookings(t *testing.T) {
 			wantErr:      ErrBookingNotFound,
 		},
 		{
+			name: "Empty list of bookings",
+			mockList: func(_ context.Context, _ uuid.UUID) ([]db.Booking, error) {
+				return []db.Booking{}, nil
+			},
+			wantBookings: nil,
+			wantErr:      ErrBookingNotFound,
+		},
+		{
 			name: "Not an authorized user",
 			mockList: func(_ context.Context, _ uuid.UUID) ([]db.Booking, error) {
 				return wrongUserBookings, nil
