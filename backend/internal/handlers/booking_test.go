@@ -341,7 +341,7 @@ func TestGetBookingByIDHandler(t *testing.T) {
 	}{
 		{
 
-			name:      "success",
+			name:      "Success",
 			routeID:   bookingID.String(),
 			ctxUserID: userID,
 			mockGet: func(ctx context.Context, id uuid.UUID) (db.Booking, error) {
@@ -354,7 +354,7 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			expectResponse: &fakeBooking,
 		},
 		{
-			name:      "not found",
+			name:      "Not found",
 			routeID:   bookingID.String(),
 			ctxUserID: userID,
 			mockGet: func(ctx context.Context, id uuid.UUID) (db.Booking, error) {
@@ -363,7 +363,7 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			expectStatus: http.StatusNotFound,
 		},
 		{
-			name:      "forbidden",
+			name:      "Forbidden",
 			routeID:   bookingID.String(),
 			ctxUserID: uuid.New(),
 			mockGet: func(ctx context.Context, id uuid.UUID) (db.Booking, error) {
@@ -372,7 +372,7 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			expectStatus: http.StatusForbidden,
 		},
 		{
-			name:      "db error",
+			name:      "Db error",
 			routeID:   bookingID.String(),
 			ctxUserID: userID,
 			mockGet: func(ctx context.Context, id uuid.UUID) (db.Booking, error) {
@@ -381,14 +381,14 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			expectStatus: http.StatusInternalServerError,
 		},
 		{
-			name:         "bad id param",
+			name:         "Bad id param",
 			routeID:      "not-a-uuid",
 			ctxUserID:    userID,
 			mockGet:      nil,
 			expectStatus: http.StatusBadRequest,
 		},
 		{
-			name:         "no auth",
+			name:         "No auth",
 			routeID:      bookingID.String(),
 			ctxUserID:    nil,
 			mockGet:      nil,
@@ -481,7 +481,7 @@ func TestListBookingsForUserHandler(t *testing.T) {
 	}{
 		{
 
-			name:      "success",
+			name:      "Success",
 			ctxUserID: userID,
 			mockList: func(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
 				if id != userID {
@@ -491,6 +491,26 @@ func TestListBookingsForUserHandler(t *testing.T) {
 			},
 			expectStatus:   http.StatusOK,
 			expectResponse: fakeBookings,
+		},
+		{
+
+			name:      "User ID missing",
+			ctxUserID: nil,
+			mockList: func(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
+				return fakeBookings, nil
+			},
+			expectStatus:   http.StatusUnauthorized,
+			expectResponse: nil,
+		},
+		{
+
+			name:      "User not found",
+			ctxUserID: uuid.New(),
+			mockList: func(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
+				return fakeBookings, nil
+			},
+			expectStatus:   http.StatusInternalServerError,
+			expectResponse: nil,
 		},
 	}
 
