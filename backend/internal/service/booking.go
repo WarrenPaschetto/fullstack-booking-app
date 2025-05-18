@@ -129,7 +129,9 @@ func (s *BookingService) ListUserBookings(
 		}
 		return []db.Booking{}, err
 	}
-
+	if len(bookings) == 0 {
+		return nil, ErrBookingNotFound
+	}
 	if bookings[0].UserID != userID {
 		return []db.Booking{}, ErrNotAuthorized
 	}
