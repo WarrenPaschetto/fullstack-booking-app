@@ -117,3 +117,22 @@ func (s *BookingService) GetBookingByID(
 
 	return appt, nil
 }
+
+func (s *BookingService) ListUserBookings(
+	ctx context.Context,
+	userID uuid.UUID,
+) ([]db.Booking, error) {
+	bookings, err := s.queries.ListBookingsForUser(ctx, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []db.Booking{}, ErrBookingNotFound
+		}
+		return []db.Booking{}, err
+	}
+
+	if bookings[0].UserID != userID {
+		return []db.Booking{}, ErrNotAuthorized
+	}
+
+	return bookings, nil
+}

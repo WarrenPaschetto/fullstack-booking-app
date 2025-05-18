@@ -24,6 +24,7 @@ type mockBookingQueries struct {
 	DeleteBookingFn          func(ctx context.Context, arg db.DeleteBookingParams) error
 	RescheduleBookingFn      func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
 	GetBookingByIDFn         func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
+	ListBookingsForUserFn    func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
 }
 
 func (m *mockBookingQueries) CreateBooking(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error) {
@@ -44,6 +45,9 @@ func (m *mockBookingQueries) RescheduleBooking(ctx context.Context, arg db.Resch
 
 func (m *mockBookingQueries) GetBookingByID(ctx context.Context, bookingID uuid.UUID) (db.Booking, error) {
 	return m.GetBookingByIDFn(ctx, bookingID)
+}
+func (m *mockBookingQueries) ListBookingsForUser(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
+	return m.ListBookingsForUserFn(ctx, id)
 }
 
 func TestCreateBookingHandler(t *testing.T) {
@@ -428,6 +432,102 @@ func TestGetBookingByIDHandler(t *testing.T) {
 				}
 				if got.ID != fakeBooking.ID || got.UserID != fakeBooking.UserID {
 					t.Errorf("unexpected booking returned: %+v", got)
+				}
+			}
+		})
+	}
+}
+
+func TestListBookingsForUserHandler(t *testing.T) {
+	userID := uuid.New()
+	bookingID := uuid.New()
+	bookingID2 := uuid.New()
+	bookingID3 := uuid.New()
+	now := time.Now()
+
+	fakeBookings := []db.Booking{
+		{
+			ID:               bookingID,
+			UserID:           userID,
+			AppointmentStart: now.Add(time.Hour * 24),
+			DurationMinutes:  30,
+			CreatedAt:        now.Add(-time.Hour * 336),
+			UpdatedAt:        now.Add(-time.Minute * 336),
+		},
+		{
+			ID:               bookingID2,
+			UserID:           userID,
+			AppointmentStart: now.Add(time.Hour * 84),
+			DurationMinutes:  30,
+			CreatedAt:        now.Add(-time.Hour * 168),
+			UpdatedAt:        now.Add(-time.Minute * 168),
+		},
+		{
+			ID:               bookingID3,
+			UserID:           userID,
+			AppointmentStart: now.Add(time.Hour * 168),
+			DurationMinutes:  30,
+			CreatedAt:        now.Add(-time.Hour * 48),
+			UpdatedAt:        now.Add(-time.Minute * 48),
+		},
+	}
+
+	tests := []struct {
+		name           string
+		ctxUserID      interface{}
+		mockList       func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
+		expectStatus   int
+		expectResponse []db.Booking
+	}{
+		{
+
+			name:      "success",
+			ctxUserID: userID,
+			mockList: func(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
+				if id != userID {
+					t.Errorf("ListBookingsForUser called with wrong userID: got %v, want %v", id, userID)
+				}
+				return fakeBookings, nil
+			},
+			expectStatus:   http.StatusOK,
+			expectResponse: fakeBookings,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			mockQ := &mockBookingQueries{
+				ListBookingsForUserFn: tt.mockList,
+			}
+			bookingSvc := service.NewBookingService(mockQ)
+
+			h := &Handler{BookingService: bookingSvc}
+			handler := h.ListBookingsForUserHandler()
+
+			req := httptest.NewRequest(http.MethodGet, "/bookings", nil)
+			if tt.ctxUserID != nil {
+				req = req.WithContext(
+					context.WithValue(req.Context(), middleware.UserIDKey, tt.ctxUserID),
+				)
+			}
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			if rr.Code != tt.expectStatus {
+				t.Fatalf("expected status %d, got %d; body=%s", tt.expectStatus, rr.Code, rr.Body.String())
+			}
+
+			if tt.expectStatus == http.StatusOK {
+				var got []db.Booking
+				if err := json.NewDecoder(rr.Body).Decode(&got); err != nil {
+					t.Fatalf("failed to decode JSON: %v", err)
+				}
+				for index, booking := range got {
+					if got[index].UserID != booking.UserID {
+						t.Errorf("unexpected user booking returned: %+v", got)
+					}
 				}
 			}
 		})
