@@ -283,6 +283,7 @@ func TestBookingService_GetBookingByID(t *testing.T) {
 	bookingID := uuid.New()
 	userID := uuid.New()
 	wrongUser := uuid.New()
+	otherErr := errors.New("db fail")
 
 	tests := []struct {
 		name        string
@@ -305,10 +306,17 @@ func TestBookingService_GetBookingByID(t *testing.T) {
 		},
 		{
 			name: "Booking not found",
-			mockGetBook: func(_ context.Context, _ uuid.UUID) (db.Booking, error) {
+			mockGetBook: func(_ context.Context, id uuid.UUID) (db.Booking, error) {
 				return db.Booking{}, sql.ErrNoRows
 			},
 			wantErr: ErrBookingNotFound,
+		},
+		{
+			name: "DB error",
+			mockGetBook: func(_ context.Context, id uuid.UUID) (db.Booking, error) {
+				return db.Booking{}, otherErr
+			},
+			wantErr: otherErr,
 		},
 		{
 			name: "Not an authorized user",
@@ -363,6 +371,7 @@ func TestListUserBookings(t *testing.T) {
 	bookingID3 := uuid.New()
 	userID := uuid.New()
 	wrongUser := uuid.New()
+	otherErr := errors.New("db fail")
 
 	fakeBookings := []db.Booking{
 		{
@@ -426,15 +435,23 @@ func TestListUserBookings(t *testing.T) {
 		},
 		{
 			name: "Bookings not found",
-			mockList: func(_ context.Context, _ uuid.UUID) ([]db.Booking, error) {
+			mockList: func(_ context.Context, id uuid.UUID) ([]db.Booking, error) {
 				return []db.Booking{}, sql.ErrNoRows
 			},
 			wantBookings: nil,
 			wantErr:      ErrBookingNotFound,
 		},
 		{
+			name: "DB error",
+			mockList: func(_ context.Context, id uuid.UUID) ([]db.Booking, error) {
+				return []db.Booking{}, otherErr
+			},
+			wantBookings: nil,
+			wantErr:      otherErr,
+		},
+		{
 			name: "Empty list of bookings",
-			mockList: func(_ context.Context, _ uuid.UUID) ([]db.Booking, error) {
+			mockList: func(_ context.Context, id uuid.UUID) ([]db.Booking, error) {
 				return []db.Booking{}, nil
 			},
 			wantBookings: nil,
@@ -442,7 +459,7 @@ func TestListUserBookings(t *testing.T) {
 		},
 		{
 			name: "Not an authorized user",
-			mockList: func(_ context.Context, _ uuid.UUID) ([]db.Booking, error) {
+			mockList: func(_ context.Context, _id uuid.UUID) ([]db.Booking, error) {
 				return wrongUserBookings, nil
 			},
 			wantBookings: nil,
