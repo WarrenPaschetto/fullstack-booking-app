@@ -59,7 +59,7 @@ func (e *customError) Error() string { return e.msg }
 func TestRegisterHandler(t *testing.T) {
 	tests := []struct {
 		name             string
-		requestBody      RegisterRequest
+		requestBody      interface{}
 		mockQuery        *mockRegisterQueries
 		expectedCode     int
 		expectedContains string
@@ -74,6 +74,12 @@ func TestRegisterHandler(t *testing.T) {
 			},
 			mockQuery:    &mockRegisterQueries{},
 			expectedCode: http.StatusCreated,
+		},
+		{
+			name:         "Invalid request body",
+			requestBody:  "{ this is an invalid request body",
+			mockQuery:    &mockRegisterQueries{},
+			expectedCode: http.StatusInternalServerError,
 		},
 		{
 			name: "Missing email",
