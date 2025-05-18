@@ -137,6 +137,11 @@ func TestDeleteBookingHandler(t *testing.T) {
 	}
 	jsonBody, _ := json.Marshal(validBody)
 
+	invalidBody := DeleteBookingRequest{
+		ID: uuid.Nil,
+	}
+	invalidJsonBody, _ := json.Marshal(invalidBody)
+
 	tests := []struct {
 		name         string
 		ctxUserID    any
@@ -174,7 +179,7 @@ func TestDeleteBookingHandler(t *testing.T) {
 		{
 			name:         "No booking ID",
 			ctxUserID:    userID,
-			body:         nil,
+			body:         invalidJsonBody,
 			expectStatus: http.StatusBadRequest,
 		},
 		{
