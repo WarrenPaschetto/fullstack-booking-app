@@ -13,6 +13,7 @@ import (
 var ErrBookingConflict = errors.New("booking time slot conflict")
 var ErrBookingNotFound = errors.New("booking not found")
 var ErrNotAuthorized = errors.New("not authorized")
+var ErrNoBookingsFound = errors.New("no bookings found")
 
 type BookingService struct {
 	queries db.BookingQuerier
@@ -125,16 +126,30 @@ func (s *BookingService) ListUserBookings(
 	bookings, err := s.queries.ListBookingsForUser(ctx, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []db.Booking{}, ErrBookingNotFound
+			return []db.Booking{}, ErrNoBookingsFound
 		}
 		return []db.Booking{}, err
 	}
 	if len(bookings) == 0 {
-		return nil, ErrBookingNotFound
+		return nil, ErrNoBookingsFound
 	}
 	if bookings[0].UserID != userID {
 		return []db.Booking{}, ErrNotAuthorized
 	}
 
+	return bookings, nil
+}
+
+func (s *BookingService) ListAdminBookings(ctx context.Context) ([]db.Booking, error) {
+	bookings, err := s.queries.ListAllBookingsForAdmin(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []db.Booking{}, ErrNoBookingsFound
+		}
+		return []db.Booking{}, err
+	}
+	if len(bookings) == 0 {
+		return nil, ErrNoBookingsFound
+	}
 	return bookings, nil
 }
