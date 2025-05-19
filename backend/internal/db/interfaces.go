@@ -20,3 +20,8 @@ type BookingQuerier interface {
 	ListBookingsForUser(ctx context.Context, userID uuid.UUID) ([]Booking, error)
 	ListAllBookingsForAdmin(ctx context.Context) ([]Booking, error)
 }
+
+type AdminQuerier interface {
+	CreateAdmin(ctx context.Context, arg CreateAdminParams) error
+	GetAdminByEmail(ctx context.Context, email string) (Admin, error)
+}
