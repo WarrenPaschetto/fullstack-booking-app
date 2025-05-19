@@ -176,3 +176,15 @@ func (h *Handler) ListBookingsForUserHandler() http.HandlerFunc {
 		utils.RespondWithJSON(w, http.StatusOK, bookings)
 	}
 }
+
+func (h *Handler) ListAllBookingsForAdminHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		bookings, err := h.BookingService.ListAdminBookings(r.Context())
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to list bookings", err)
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, bookings)
+	}
+}
