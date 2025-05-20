@@ -9,6 +9,7 @@ import (
 type UserQuerier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
 }
 
 type BookingQuerier interface {
