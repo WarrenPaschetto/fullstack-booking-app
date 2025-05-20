@@ -70,47 +70,6 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
-const getUserByName = `-- name: GetUserByName :many
-SELECT id, first_name, last_name, created_at, updated_at, email, password_hash FROM users
-WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?)
-`
-
-type GetUserByNameParams struct {
-	LOWER   string
-	LOWER_2 string
-}
-
-func (q *Queries) GetUserByName(ctx context.Context, arg GetUserByNameParams) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getUserByName, arg.LOWER, arg.LOWER_2)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.FirstName,
-			&i.LastName,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Email,
-			&i.PasswordHash,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listUsers = `-- name: ListUsers :many
 SELECT id, first_name, last_name, created_at, updated_at, email, password_hash FROM users ORDER BY last_name ASC, first_name ASC
 `

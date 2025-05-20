@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
+	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -80,7 +81,7 @@ func TestRegisterHandler(t *testing.T) {
 			name:         "Invalid request body",
 			requestBody:  "{ this is an invalid request body",
 			mockQuery:    &mockRegisterQueries{},
-			expectedCode: http.StatusInternalServerError,
+			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name: "Missing email",
@@ -207,6 +208,9 @@ func (m *mockUserQuerier) GetUserByEmail(ctx context.Context, email string) (db.
 func (m *mockUserQuerier) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return m.DeleteUserFn(ctx, id)
 }
+func (m *mockUserQuerier) UpdateUser(_ context.Context, _ db.UpdateUserParams) error {
+	return nil
+}
 
 func TestLoginHandler(t *testing.T) {
 	plain := "plain-password"
@@ -274,8 +278,8 @@ func TestLoginHandler(t *testing.T) {
 			name:         "Malformed JSON",
 			secret:       "testsecret",
 			body:         `{ not json }`,
-			mockGet:      nil, // handler will fail before calling DB
-			expectedCode: http.StatusInternalServerError,
+			mockGet:      nil,
+			expectedCode: http.StatusBadRequest,
 		},
 		{
 			name:   "Missing JWT_SECRET",
@@ -405,6 +409,172 @@ func TestDeleteUserHandler(t *testing.T) {
 			}
 
 			if tt.expectedContains != "" && !strings.Contains(rr.Body.String(), tt.expectedContains) {
+				t.Errorf("expected response to contain %q, got %s", tt.expectedContains, rr.Body.String())
+			}
+		})
+	}
+}
+
+type mockUpdateQueries struct {
+	shouldFailUpdate bool
+	ReturnUser       db.User
+}
+
+func (m *mockUpdateQueries) UpdateUser(ctx context.Context, arg db.UpdateUserParams) error {
+	if m.shouldFailUpdate {
+		return errors.New("Update failed")
+	}
+	if arg.Email == usedEmail {
+		return errors.New("UNIQUE constraint failed: users.email")
+	}
+	return nil
+}
+func (m *mockUpdateQueries) GetUserByEmail(ctx context.Context, email string) (db.User, error) {
+	// you could inspect `email` here if you want to simulate a not-found, but for most
+	// tests you'll just return a user matching your request:
+	return m.ReturnUser, nil
+}
+func (m *mockUpdateQueries) CreateUser(_ context.Context, _ db.CreateUserParams) error {
+	return nil
+}
+func (m *mockUpdateQueries) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	return nil
+}
+
+func TestUpdateUserHandler(t *testing.T) {
+	fakeUserId := uuid.New()
+	fakeUser := db.User{
+		ID:           fakeUserId,
+		FirstName:    "John",
+		LastName:     "Doe",
+		Email:        "user@example.com",
+		PasswordHash: "password",
+	}
+
+	tests := []struct {
+		name             string
+		requestBody      interface{}
+		mockUpdate       *mockUpdateQueries
+		expectedCode     int
+		expectedContains string
+	}{
+		{
+			name: "Successful update",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockUpdate: &mockUpdateQueries{
+				ReturnUser: fakeUser,
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			name:         "Invalid request body",
+			requestBody:  "{ this is an invalid request body",
+			mockUpdate:   &mockUpdateQueries{},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name: "Missing email",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "",
+				Password:  "strongpassword",
+			},
+			mockUpdate:       &mockUpdateQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "Email and password required",
+		},
+		{
+			name: "Missing password",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "",
+			},
+			mockUpdate:       &mockUpdateQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "Email and password required",
+		},
+		{
+			name: "Missing first name",
+			requestBody: UpdateUserRequest{
+				FirstName: "",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+			},
+			mockUpdate:       &mockUpdateQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "First and last name required",
+		},
+		{
+			name: "Missing last name",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "",
+				Email:     "user@example.com",
+			},
+			mockUpdate:       &mockUpdateQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "First and last name required",
+		},
+		{
+			name: "Insert failure",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockUpdate: &mockUpdateQueries{
+				shouldFailUpdate: true,
+			},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Failed to update user",
+		},
+		{
+			name: "Email already registered",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     usedEmail,
+				Password:  "strongpassword",
+			},
+			mockUpdate:       &mockUpdateQueries{},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "Email already in use",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := UpdateUserHandler(tt.mockUpdate)
+
+			var buf bytes.Buffer
+			if s, ok := tt.requestBody.(string); ok {
+				buf.WriteString(s)
+			} else {
+				json.NewEncoder(&buf).Encode(tt.requestBody)
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/user", &buf)
+			ctx := context.WithValue(req.Context(), middleware.UserIDKey, fakeUserId)
+			req = req.WithContext(ctx)
+			req.Header.Set("Content-Type", "application/json")
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			if rr.Code != tt.expectedCode {
+				t.Errorf("expected status code %d, got %d", tt.expectedCode, rr.Code)
+			}
+
+			if tt.expectedContains != "" && !bytes.Contains(rr.Body.Bytes(), []byte(tt.expectedContains)) {
 				t.Errorf("expected response to contain %q, got %s", tt.expectedContains, rr.Body.String())
 			}
 		})

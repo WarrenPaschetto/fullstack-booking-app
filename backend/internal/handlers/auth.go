@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
+	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -45,6 +46,13 @@ type DeleteRequest struct {
 	UserId uuid.UUID `json:"user_id"`
 }
 
+type UpdateUserRequest struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+}
+
 func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -56,11 +64,10 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 		req := RegisterRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
 
-		// validate input
 		if req.FirstName == "" || req.LastName == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "First and last name required", nil)
 			return
@@ -71,14 +78,12 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		// hash the password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Could not hash password", err)
 			return
 		}
 
-		// create user
 		err = queries.CreateUser(r.Context(), db.CreateUserParams{
 			FirstName:    req.FirstName,
 			LastName:     req.LastName,
@@ -119,7 +124,7 @@ func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
 		req := LoginRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
 
@@ -187,5 +192,79 @@ func DeleteUserHandler(queries db.UserQuerier) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func UpdateUserHandler(queries db.UserQuerier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		type update struct {
+			RegisterResponse
+		}
+		userID, ok := r.Context().Value(middleware.UserIDKey).(uuid.UUID)
+		if !ok {
+			utils.RespondWithError(w, http.StatusUnauthorized, "Missing user in context", nil)
+			return
+		}
+		decoder := json.NewDecoder(r.Body)
+		req := UpdateUserRequest{}
+		err := decoder.Decode(&req)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+			return
+		}
+
+		if req.FirstName == "" || req.LastName == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "First and last name required", nil)
+			return
+		}
+
+		if req.Email == "" || req.Password == "" {
+			utils.RespondWithError(w, http.StatusBadRequest, "Email and password required", nil)
+			return
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Could not hash password", err)
+			return
+		}
+
+		params := db.UpdateUserParams{
+			ID:           userID,
+			FirstName:    req.FirstName,
+			LastName:     req.LastName,
+			Email:        req.Email,
+			PasswordHash: string(hashedPassword),
+		}
+		err = queries.UpdateUser(r.Context(), params)
+		if err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				utils.RespondWithError(w, http.StatusNotFound, "User not found", nil)
+			case strings.Contains(err.Error(), "UNIQUE constraint failed: users.email"):
+				utils.RespondWithError(w, http.StatusBadRequest, "Email already in use", nil)
+			default:
+				utils.RespondWithError(w, http.StatusInternalServerError, "Failed to update user", err)
+			}
+			return
+		}
+
+		updated, err := queries.GetUserByEmail(r.Context(), req.Email)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Could not fetch updated user", err)
+			return
+		}
+
+		utils.RespondWithJSON(w, http.StatusOK, update{
+			RegisterResponse: RegisterResponse{
+				ID:        updated.ID,
+				FirstName: updated.FirstName,
+				LastName:  updated.LastName,
+				Email:     updated.Email,
+				CreatedAt: updated.CreatedAt,
+				UpdatedAt: updated.UpdatedAt,
+			},
+		})
 	}
 }
