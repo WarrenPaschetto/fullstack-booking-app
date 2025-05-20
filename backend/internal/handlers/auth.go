@@ -255,6 +255,10 @@ func UpdateUserHandler(queries db.UserQuerier) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Could not fetch updated user", err)
 			return
 		}
+		if updated.ID != userID {
+			utils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized", nil)
+			return
+		}
 
 		utils.RespondWithJSON(w, http.StatusOK, update{
 			RegisterResponse: RegisterResponse{

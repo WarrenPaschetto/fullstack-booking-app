@@ -416,11 +416,16 @@ func TestDeleteUserHandler(t *testing.T) {
 }
 
 type mockUpdateQueries struct {
+	userNotFound     bool
 	shouldFailUpdate bool
+	shouldFailFetch  bool
 	ReturnUser       db.User
 }
 
 func (m *mockUpdateQueries) UpdateUser(ctx context.Context, arg db.UpdateUserParams) error {
+	if m.userNotFound {
+		return sql.ErrNoRows
+	}
 	if m.shouldFailUpdate {
 		return errors.New("Update failed")
 	}
@@ -430,8 +435,9 @@ func (m *mockUpdateQueries) UpdateUser(ctx context.Context, arg db.UpdateUserPar
 	return nil
 }
 func (m *mockUpdateQueries) GetUserByEmail(ctx context.Context, email string) (db.User, error) {
-	// you could inspect `email` here if you want to simulate a not-found, but for most
-	// tests you'll just return a user matching your request:
+	if m.shouldFailFetch {
+		return db.User{}, errors.New("Could not fetch updated user")
+	}
 	return m.ReturnUser, nil
 }
 func (m *mockUpdateQueries) CreateUser(_ context.Context, _ db.CreateUserParams) error {
@@ -450,6 +456,13 @@ func TestUpdateUserHandler(t *testing.T) {
 		Email:        "user@example.com",
 		PasswordHash: "password",
 	}
+	wrongUser := db.User{
+		ID:           uuid.Nil,
+		FirstName:    "Mark",
+		LastName:     "Smith",
+		Email:        "M12email@example.com",
+		PasswordHash: "secret",
+	}
 
 	tests := []struct {
 		name             string
@@ -457,6 +470,7 @@ func TestUpdateUserHandler(t *testing.T) {
 		mockUpdate       *mockUpdateQueries
 		expectedCode     int
 		expectedContains string
+		injectUserID     bool
 	}{
 		{
 			name: "Successful update",
@@ -470,12 +484,42 @@ func TestUpdateUserHandler(t *testing.T) {
 				ReturnUser: fakeUser,
 			},
 			expectedCode: http.StatusOK,
+			injectUserID: true,
+		},
+		{
+			name: "Wrong user",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockUpdate: &mockUpdateQueries{
+				ReturnUser: wrongUser,
+			},
+			expectedCode: http.StatusUnauthorized,
+			injectUserID: true,
+		},
+		{
+			name: "Missing user in context",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockUpdate: &mockUpdateQueries{
+				ReturnUser: fakeUser,
+			},
+			expectedCode: http.StatusUnauthorized,
+			injectUserID: false,
 		},
 		{
 			name:         "Invalid request body",
 			requestBody:  "{ this is an invalid request body",
 			mockUpdate:   &mockUpdateQueries{},
 			expectedCode: http.StatusBadRequest,
+			injectUserID: true,
 		},
 		{
 			name: "Missing email",
@@ -488,6 +532,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate:       &mockUpdateQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			injectUserID:     true,
 		},
 		{
 			name: "Missing password",
@@ -500,6 +545,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate:       &mockUpdateQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			injectUserID:     true,
 		},
 		{
 			name: "Missing first name",
@@ -511,6 +557,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate:       &mockUpdateQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
+			injectUserID:     true,
 		},
 		{
 			name: "Missing last name",
@@ -522,6 +569,22 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate:       &mockUpdateQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
+			injectUserID:     true,
+		},
+		{
+			name: "User not found",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockUpdate: &mockUpdateQueries{
+				userNotFound: true,
+			},
+			expectedCode:     http.StatusNotFound,
+			expectedContains: "User not found",
+			injectUserID:     true,
 		},
 		{
 			name: "Insert failure",
@@ -536,6 +599,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Failed to update user",
+			injectUserID:     true,
 		},
 		{
 			name: "Email already registered",
@@ -548,6 +612,20 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate:       &mockUpdateQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email already in use",
+			injectUserID:     true,
+		},
+		{
+			name: "Email not found",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "new-email@email.com",
+				Password:  "strongpassword",
+			},
+			mockUpdate:       &mockUpdateQueries{shouldFailFetch: true},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Could not fetch updated user",
+			injectUserID:     true,
 		},
 	}
 
@@ -563,9 +641,11 @@ func TestUpdateUserHandler(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/user", &buf)
-			ctx := context.WithValue(req.Context(), middleware.UserIDKey, fakeUserId)
-			req = req.WithContext(ctx)
 			req.Header.Set("Content-Type", "application/json")
+			if tt.injectUserID {
+				ctx := context.WithValue(req.Context(), middleware.UserIDKey, fakeUserId)
+				req = req.WithContext(ctx)
+			}
 
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
