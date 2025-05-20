@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -37,6 +39,10 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	Token string `json:"token"`
+}
+
+type DeleteRequest struct {
+	UserId uuid.UUID `json:"user_id"`
 }
 
 func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
@@ -88,7 +94,6 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		// fetch created user
 		user, err := queries.GetUserByEmail(r.Context(), req.Email)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to fetch new user", err)
@@ -118,7 +123,6 @@ func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		// validate input
 		if req.Email == "" || req.Password == "" {
 			utils.RespondWithError(w, http.StatusBadRequest, "Email and password required", nil)
 			return
@@ -155,5 +159,33 @@ func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, LoginResponse{Token: tokenString})
+	}
+}
+
+func DeleteUserHandler(queries db.UserQuerier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		decoder := json.NewDecoder(r.Body)
+		req := DeleteRequest{}
+		err := decoder.Decode(&req)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+			return
+		}
+		if req.UserId == uuid.Nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid user ID", nil)
+			return
+		}
+
+		err = queries.DeleteUser(r.Context(), req.UserId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				utils.RespondWithError(w, http.StatusNotFound, "User not found", nil)
+				return
+			}
+			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to delete user", err)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
