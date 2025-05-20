@@ -640,11 +640,24 @@ func TestUpdateUserHandler(t *testing.T) {
 			injectUserID:     true,
 			shouldFailHash:   false,
 		},
+		{
+			name: "Hash failure",
+			requestBody: UpdateUserRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "newEmail@email.com",
+				Password:  "strongpassword",
+			},
+			mockUpdate:       &mockUpdateQueries{},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Could not hash password",
+			injectUserID:     true,
+			shouldFailHash:   true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var HashPasswordFn = bcrypt.GenerateFromPassword
 
 			oldHash := HashPasswordFn
 			if tt.shouldFailHash {
