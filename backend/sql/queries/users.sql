@@ -14,10 +14,6 @@ VALUES (
 SELECT * FROM users
 WHERE email = ?;
 
--- name: GetUserByName :many
-SELECT * FROM users
-WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?);
-
 -- name: UpdateUser :exec
 UPDATE users 
 SET first_name = ?, last_name = ?, email = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP

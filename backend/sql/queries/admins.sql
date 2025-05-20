@@ -14,10 +14,6 @@ VALUES (
 SELECT * FROM admins
 WHERE email = ?;
 
--- name: GetAdminByName :many
-SELECT * FROM admins
-WHERE LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?);
-
 -- name: UpdateAdmin :exec
 UPDATE admins 
 SET first_name = ?, last_name = ?, email = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP
