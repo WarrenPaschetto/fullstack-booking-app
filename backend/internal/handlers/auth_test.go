@@ -65,6 +65,7 @@ func TestRegisterHandler(t *testing.T) {
 		mockQuery        *mockRegisterQueries
 		expectedCode     int
 		expectedContains string
+		shouldFailHash   bool
 	}{
 		{
 			name: "Valid registration",
@@ -74,14 +75,16 @@ func TestRegisterHandler(t *testing.T) {
 				Email:     "user@example.com",
 				Password:  "strongpassword",
 			},
-			mockQuery:    &mockRegisterQueries{},
-			expectedCode: http.StatusCreated,
+			mockQuery:      &mockRegisterQueries{},
+			expectedCode:   http.StatusCreated,
+			shouldFailHash: false,
 		},
 		{
-			name:         "Invalid request body",
-			requestBody:  "{ this is an invalid request body",
-			mockQuery:    &mockRegisterQueries{},
-			expectedCode: http.StatusBadRequest,
+			name:           "Invalid request body",
+			requestBody:    "{ this is an invalid request body",
+			mockQuery:      &mockRegisterQueries{},
+			expectedCode:   http.StatusBadRequest,
+			shouldFailHash: false,
 		},
 		{
 			name: "Missing email",
@@ -94,6 +97,7 @@ func TestRegisterHandler(t *testing.T) {
 			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing password",
@@ -106,6 +110,7 @@ func TestRegisterHandler(t *testing.T) {
 			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing first name",
@@ -117,6 +122,7 @@ func TestRegisterHandler(t *testing.T) {
 			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing last name",
@@ -128,6 +134,20 @@ func TestRegisterHandler(t *testing.T) {
 			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
+			shouldFailHash:   false,
+		},
+		{
+			name: "Hash failure",
+			requestBody: RegisterRequest{
+				FirstName: "John",
+				LastName:  "Doe",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockQuery:        &mockRegisterQueries{},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Could not hash password",
+			shouldFailHash:   true,
 		},
 		{
 			name: "Insert failure",
@@ -142,6 +162,7 @@ func TestRegisterHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Failed to create user",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Email already registered",
@@ -154,6 +175,7 @@ func TestRegisterHandler(t *testing.T) {
 			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email already registered",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Unable to retrieve new user",
@@ -168,11 +190,22 @@ func TestRegisterHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Unable to fetch new user",
+			shouldFailHash:   false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			oldHash := HashPasswordFn
+			if tt.shouldFailHash {
+				HashPasswordFn = func(_ []byte, _ int) ([]byte, error) {
+					return nil, errors.New("simulated hash error")
+				}
+			}
+
+			defer func() { HashPasswordFn = oldHash }()
+
 			handler := RegisterHandler(tt.mockQuery)
 
 			jsonData, _ := json.Marshal(tt.requestBody)
