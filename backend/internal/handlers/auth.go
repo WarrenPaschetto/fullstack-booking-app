@@ -53,6 +53,8 @@ type UpdateUserRequest struct {
 	Password  string `json:"password"`
 }
 
+var HashPasswordFn = bcrypt.GenerateFromPassword
+
 func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -78,7 +80,7 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		hashedPassword, err := HashPasswordFn([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Could not hash password", err)
 			return
@@ -224,7 +226,7 @@ func UpdateUserHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		hashedPassword, err := HashPasswordFn([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Could not hash password", err)
 			return
