@@ -471,6 +471,7 @@ func TestUpdateUserHandler(t *testing.T) {
 		expectedCode     int
 		expectedContains string
 		injectUserID     bool
+		shouldFailHash   bool
 	}{
 		{
 			name: "Successful update",
@@ -483,8 +484,9 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate: &mockUpdateQueries{
 				ReturnUser: fakeUser,
 			},
-			expectedCode: http.StatusOK,
-			injectUserID: true,
+			expectedCode:   http.StatusOK,
+			injectUserID:   true,
+			shouldFailHash: false,
 		},
 		{
 			name: "Wrong user",
@@ -497,8 +499,9 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate: &mockUpdateQueries{
 				ReturnUser: wrongUser,
 			},
-			expectedCode: http.StatusUnauthorized,
-			injectUserID: true,
+			expectedCode:   http.StatusUnauthorized,
+			injectUserID:   true,
+			shouldFailHash: false,
 		},
 		{
 			name: "Missing user in context",
@@ -511,15 +514,17 @@ func TestUpdateUserHandler(t *testing.T) {
 			mockUpdate: &mockUpdateQueries{
 				ReturnUser: fakeUser,
 			},
-			expectedCode: http.StatusUnauthorized,
-			injectUserID: false,
+			expectedCode:   http.StatusUnauthorized,
+			injectUserID:   false,
+			shouldFailHash: false,
 		},
 		{
-			name:         "Invalid request body",
-			requestBody:  "{ this is an invalid request body",
-			mockUpdate:   &mockUpdateQueries{},
-			expectedCode: http.StatusBadRequest,
-			injectUserID: true,
+			name:           "Invalid request body",
+			requestBody:    "{ this is an invalid request body",
+			mockUpdate:     &mockUpdateQueries{},
+			expectedCode:   http.StatusBadRequest,
+			injectUserID:   true,
+			shouldFailHash: false,
 		},
 		{
 			name: "Missing email",
@@ -533,6 +538,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing password",
@@ -546,6 +552,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing first name",
@@ -558,6 +565,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing last name",
@@ -570,6 +578,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 		{
 			name: "User not found",
@@ -585,6 +594,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusNotFound,
 			expectedContains: "User not found",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 		{
 			name: "Insert failure",
@@ -600,6 +610,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Failed to update user",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 		{
 			name: "Email already registered",
@@ -613,6 +624,7 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email already in use",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 		{
 			name: "Email not found",
@@ -626,11 +638,23 @@ func TestUpdateUserHandler(t *testing.T) {
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Could not fetch updated user",
 			injectUserID:     true,
+			shouldFailHash:   false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var HashPasswordFn = bcrypt.GenerateFromPassword
+
+			oldHash := HashPasswordFn
+			if tt.shouldFailHash {
+				HashPasswordFn = func(_ []byte, _ int) ([]byte, error) {
+					return nil, errors.New("simulated hash error")
+				}
+			}
+
+			defer func() { HashPasswordFn = oldHash }()
+
 			handler := UpdateUserHandler(tt.mockUpdate)
 
 			var buf bytes.Buffer
