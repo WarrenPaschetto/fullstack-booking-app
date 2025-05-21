@@ -56,72 +56,90 @@ func TestAuthMiddleware(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		authHeader     string
-		secret         string
-		expectStatus   int
-		expectContains string
+		name             string
+		authHeader       string
+		secret           string
+		expectStatus     int
+		expectContains   string
+		shouldFailClaims bool
 	}{
 		{
-			name:           "Valid token",
-			authHeader:     "Bearer " + tokenString,
-			secret:         "testsecret",
-			expectStatus:   http.StatusOK,
-			expectContains: "user_id is: ",
+			name:             "Valid token",
+			authHeader:       "Bearer " + tokenString,
+			secret:           "testsecret",
+			expectStatus:     http.StatusOK,
+			expectContains:   "user_id is: ",
+			shouldFailClaims: false,
 		},
 		{
-			name:           "Missing JWT_SECRET",
-			authHeader:     "Bearer " + tokenString,
-			secret:         "",
-			expectStatus:   http.StatusInternalServerError,
-			expectContains: "Missing JWT_SECRET",
+			name:             "Missing JWT_SECRET",
+			authHeader:       "Bearer " + tokenString,
+			secret:           "",
+			expectStatus:     http.StatusInternalServerError,
+			expectContains:   "Missing JWT_SECRET",
+			shouldFailClaims: false,
 		},
 		{
-			name:           "Wrong signing method",
-			authHeader:     "Bearer " + rsString,
-			secret:         "testsecret",
-			expectStatus:   http.StatusUnauthorized,
-			expectContains: "Invalid or expired token",
+			name:             "Wrong signing method",
+			authHeader:       "Bearer " + rsString,
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			expectContains:   "Invalid or expired token",
+			shouldFailClaims: false,
 		},
 		{
-			name:           "Token missing subject claims",
-			authHeader:     "Bearer " + noSubTokenString,
-			secret:         "testsecret",
-			expectStatus:   http.StatusUnauthorized,
-			expectContains: "Missing subject claim",
+			name:             "Invalid token claims",
+			authHeader:       "Bearer " + tokenString,
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			expectContains:   "Invalid token claims",
+			shouldFailClaims: true,
 		},
 		{
-			name:           "Invalid user ID format",
-			authHeader:     "Bearer " + badSubTokenString,
-			secret:         "testsecret",
-			expectStatus:   http.StatusUnauthorized,
-			expectContains: "Invalid user ID format",
+			name:             "Token missing subject claims",
+			authHeader:       "Bearer " + noSubTokenString,
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			expectContains:   "Missing subject claim",
+			shouldFailClaims: false,
 		},
 		{
-			name:           "Missing token",
-			authHeader:     "",
-			secret:         "testsecret",
-			expectStatus:   http.StatusUnauthorized,
-			expectContains: "Missing or malformed token",
+			name:             "Invalid user ID format",
+			authHeader:       "Bearer " + badSubTokenString,
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			expectContains:   "Invalid user ID format",
+			shouldFailClaims: false,
 		},
 		{
-			name:           "Invalid token",
-			authHeader:     "Bearer " + "",
-			secret:         "testsecret",
-			expectStatus:   http.StatusUnauthorized,
-			expectContains: "Invalid or expired token",
+			name:             "Missing token",
+			authHeader:       "",
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			expectContains:   "Missing or malformed token",
+			shouldFailClaims: false,
 		},
 		{
-			name:         "Missing Authorization header",
-			authHeader:   "",
-			secret:       "testsecret",
-			expectStatus: http.StatusUnauthorized,
+			name:             "Invalid token",
+			authHeader:       "Bearer " + "",
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			expectContains:   "Invalid or expired token",
+			shouldFailClaims: false,
 		},
 		{
-			name:         "Malformed Authorization header",
-			authHeader:   "BadFormatToken",
-			secret:       "testsecret",
-			expectStatus: http.StatusUnauthorized,
+			name:             "Missing Authorization header",
+			authHeader:       "",
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			shouldFailClaims: false,
+		},
+		{
+			name:             "Malformed Authorization header",
+			authHeader:       "BadFormatToken",
+			secret:           "testsecret",
+			expectStatus:     http.StatusUnauthorized,
+			shouldFailClaims: false,
 		},
 	}
 
@@ -130,6 +148,17 @@ func TestAuthMiddleware(t *testing.T) {
 			old := os.Getenv("JWT_SECRET")
 			t.Cleanup(func() { os.Setenv("JWT_SECRET", old) })
 			os.Setenv("JWT_SECRET", tt.secret)
+
+			oldParse := ParseTokenFn
+			if tt.shouldFailClaims {
+				ParseTokenFn = func(tokenString string, keyFunc jwt.Keyfunc) (*jwt.Token, error) {
+					return &jwt.Token{
+						Valid:  true,
+						Claims: &jwt.RegisteredClaims{},
+					}, nil
+				}
+			}
+			defer func() { ParseTokenFn = oldParse }()
 
 			handler := AuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				val := r.Context().Value(UserIDKey)
