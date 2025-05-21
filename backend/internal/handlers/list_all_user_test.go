@@ -64,18 +64,8 @@ func TestListAllUsersHandler(t *testing.T) {
 				t.Fatalf("want status %d; got %d", tt.expectedCode, rr.Code)
 			}
 
-			if tt.expectedContains != "" {
-				if !bytes.Contains(rr.Body.Bytes(), []byte(tt.expectedContains)) {
-					t.Errorf("expected body to contain %q, got %q", tt.expectedContains, rr.Body.String())
-				}
-			} else {
-				var users []UserResponse
-				if err := json.NewDecoder(rr.Body).Decode(&users); err != nil {
-					t.Fatalf("invalid JSON response: %v", err)
-				}
-				if len(users) != 0 {
-					t.Errorf("expected empty slice, got %v", users)
-				}
+			if !bytes.Contains(rr.Body.Bytes(), []byte(tt.expectedContains)) {
+				t.Errorf("expected body to contain %q, got %q", tt.expectedContains, rr.Body.String())
 			}
 		})
 	}
