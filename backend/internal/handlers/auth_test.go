@@ -228,6 +228,7 @@ func TestRegisterHandler(t *testing.T) {
 type mockUserQuerier struct {
 	GetUserByEmailFn func(ctx context.Context, email string) (db.User, error)
 	DeleteUserFn     func(ctx context.Context, id uuid.UUID) error
+	ListUsersFunc    func(ctx context.Context) ([]db.User, error)
 }
 
 func (m *mockUserQuerier) CreateUser(ctx context.Context, p db.CreateUserParams) error {

@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
+	"github.com/google/uuid"
 )
 
-func (m *mockUserQuerier) ListUsers(_ context.Context) ([]db.User, error) {
-
-	return []db.User{}, nil
+func (m *mockUserQuerier) ListUsers(ctx context.Context) ([]db.User, error) {
+	return m.ListUsersFunc(ctx)
 }
 
 func TestListAllUsersHandler(t *testing.T) {
@@ -33,11 +36,13 @@ func TestListAllUsersHandler(t *testing.T) {
 			expectedContains: `"Forbidden"`,
 		},
 		{
-			name:             "Success returns empty array",
-			mockQuery:        &mockUserQuerier{},
+			name: "Unable to list users",
+			mockQuery: &mockUserQuerier{ListUsersFunc: func(ctx context.Context) ([]db.User, error) {
+				return []db.User{}, errors.New("simulated error")
+			}},
 			injectAdmin:      true,
-			expectedCode:     http.StatusOK,
-			expectedContains: "",
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Unable to list users",
 		},
 	}
 
@@ -73,5 +78,61 @@ func TestListAllUsersHandler(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestListAllUsersHandler_Mapping(t *testing.T) {
+	t0 := time.Date(2025, 5, 21, 12, 0, 0, 0, time.UTC)
+	users := []db.User{
+		{
+			ID:        uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+			FirstName: "Alice",
+			LastName:  "Anderson",
+			Email:     "alice@example.com",
+			CreatedAt: t0,
+			UpdatedAt: t0,
+			Role:      "user",
+		},
+		{
+			ID:        uuid.MustParse("22222222-2222-2222-2222-222222222222"),
+			FirstName: "Bob",
+			LastName:  "Brown",
+			Email:     "bob@example.com",
+			CreatedAt: t0,
+			UpdatedAt: t0,
+			Role:      "admin",
+		},
+	}
+
+	mock := &mockUserQuerier{
+		ListUsersFunc: func(ctx context.Context) ([]db.User, error) {
+			return users, nil
+		},
+	}
+
+	handler := ListAllUsersHandler(mock)
+	req := httptest.NewRequest(http.MethodGet, "/users", nil)
+	ctx := context.WithValue(req.Context(), middleware.IsAdminKey, true)
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d", rr.Code)
+	}
+
+	var got []UserResponse
+	if err := json.NewDecoder(rr.Body).Decode(&got); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	want := []UserResponse{
+		{ID: users[0].ID, FirstName: "Alice", LastName: "Anderson", Email: "alice@example.com", CreatedAt: t0, UpdatedAt: t0, Role: "user"},
+		{ID: users[1].ID, FirstName: "Bob", LastName: "Brown", Email: "bob@example.com", CreatedAt: t0, UpdatedAt: t0, Role: "admin"},
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("mapped slice = %#v\nwant            = %#v", got, want)
 	}
 }
