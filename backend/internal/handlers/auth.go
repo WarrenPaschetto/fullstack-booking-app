@@ -28,6 +28,7 @@ type RegisterResponse struct {
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Role      string    `json:"role"`
 }
 
 type LoginRequest struct {
@@ -144,9 +145,10 @@ func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub": user.ID,
-			"iat": jwt.NewNumericDate(time.Now()),
-			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			"sub":  user.ID,
+			"role": user.Role,
+			"iat":  jwt.NewNumericDate(time.Now()),
+			"exp":  jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})
 
 		tokenString, err := SignTokenFn(token, []byte(secret))

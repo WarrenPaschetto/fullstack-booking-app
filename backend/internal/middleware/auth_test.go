@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"net/http"
@@ -184,6 +185,44 @@ func TestAuthMiddleware(t *testing.T) {
 			}
 			if tt.expectContains != "" && !strings.Contains(rr.Body.String(), tt.expectContains) {
 				t.Errorf("expected response to contain %q, got %q", tt.expectContains, rr.Body.String())
+			}
+		})
+	}
+}
+
+func TestIsAdminFromContext(t *testing.T) {
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		expected bool
+	}{
+		{
+			name:     "No value in context",
+			ctx:      context.Background(),
+			expected: false,
+		},
+		{
+			name:     "Value is true",
+			ctx:      context.WithValue(context.Background(), IsAdminKey, true),
+			expected: true,
+		},
+		{
+			name:     "Value is false",
+			ctx:      context.WithValue(context.Background(), IsAdminKey, false),
+			expected: false,
+		},
+		{
+			name:     "Value wrong type",
+			ctx:      context.WithValue(context.Background(), IsAdminKey, "not a bool"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsAdminFromContext(tt.ctx)
+			if got != tt.expected {
+				t.Fatalf("IsAdminFromContext returned %v; expected %v", got, tt.expected)
 			}
 		})
 	}

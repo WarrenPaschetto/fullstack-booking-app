@@ -22,6 +22,7 @@ var ParseTokenFn = func(tokenString string, keyFunc jwt.Keyfunc) (*jwt.Token, er
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Missing or malformed token", nil)
