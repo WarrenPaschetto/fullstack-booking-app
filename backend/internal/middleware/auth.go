@@ -14,6 +14,7 @@ import (
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
+const IsAdminKey contextKey = "is_admin"
 
 var ParseTokenFn = func(tokenString string, keyFunc jwt.Keyfunc) (*jwt.Token, error) {
 	return jwt.Parse(tokenString, keyFunc)
@@ -61,9 +62,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid user ID format", err)
 			return
 		}
+		role, _ := claims["role"].(string)
+		isAdmin := (role == "admin")
 
 		ctx := context.WithValue(r.Context(), UserIDKey, userUUID)
+		ctx = context.WithValue(ctx, IsAdminKey, isAdmin)
 		next.ServeHTTP(w, r.WithContext(ctx))
 
 	})
+}
+
+func IsAdminFromContext(ctx context.Context) bool {
+	v := ctx.Value(IsAdminKey)
+	isAdmin, _ := v.(bool)
+	return isAdmin
 }

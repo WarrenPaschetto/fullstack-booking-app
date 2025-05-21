@@ -18,29 +18,29 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type mockAdminRegisterQueries struct {
-	db.AdminQuerier
+type mockRegisterQueries struct {
+	db.Queries
 	shouldFailInsert bool
 	shouldFailFetch  bool
 }
 
-func (m *mockAdminRegisterQueries) CreateAdmin(_ context.Context, admin db.CreateAdminParams) error {
-	if admin.Email == fakeEmail {
-		return errors.New("UNIQUE constraint failed: admin.email")
+func (m *mockRegisterQueries) CreateUser(_ context.Context, user db.CreateUserParams) error {
+	if user.Email == usedEmail {
+		return errors.New("UNIQUE constraint failed: users.email")
 	}
 	if m.shouldFailInsert {
-		return errorInsertFailed
+		return errInsertFailed
 	}
 	return nil
 }
 
-var fakeEmail = "usedEmail@email.com"
+var usedEmail = "usedEmail@email.com"
 
-func (m *mockAdminRegisterQueries) GetAdminByEmail(_ context.Context, email string) (db.Admin, error) {
+func (m *mockRegisterQueries) GetUserByEmail(_ context.Context, email string) (db.User, error) {
 	if m.shouldFailFetch {
-		return db.Admin{}, errors.New("Unable to fetch admin")
+		return db.User{}, errors.New("Unable to fetch new user")
 	}
-	return db.Admin{
+	return db.User{
 		ID:           uuid.New(),
 		FirstName:    "John",
 		LastName:     "Doe",
@@ -51,144 +51,144 @@ func (m *mockAdminRegisterQueries) GetAdminByEmail(_ context.Context, email stri
 	}, nil
 }
 
-var errorInsertFailed = &customizedError{msg: "insert failed"}
+var errInsertFailed = &customError{msg: "insert failed"}
 
-type customizedError struct{ msg string }
+type customError struct{ msg string }
 
-func (e *customizedError) Error() string { return e.msg }
+func (e *customError) Error() string { return e.msg }
 
-func TestRegisterAdminHandler(t *testing.T) {
+func TestRegisterHandler(t *testing.T) {
 	tests := []struct {
 		name             string
 		requestBody      interface{}
-		mockQuery        *mockAdminRegisterQueries
+		mockQuery        *mockRegisterQueries
 		expectedCode     int
 		expectedContains string
 		shouldFailHash   bool
 	}{
 		{
 			name: "Valid registration",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
 				Email:     "user@example.com",
 				Password:  "strongpassword",
 			},
-			mockQuery:      &mockAdminRegisterQueries{},
+			mockQuery:      &mockRegisterQueries{},
 			expectedCode:   http.StatusCreated,
 			shouldFailHash: false,
 		},
 		{
 			name:           "Invalid request body",
 			requestBody:    "{ this is an invalid request body",
-			mockQuery:      &mockAdminRegisterQueries{},
-			expectedCode:   http.StatusInternalServerError,
+			mockQuery:      &mockRegisterQueries{},
+			expectedCode:   http.StatusBadRequest,
 			shouldFailHash: false,
 		},
 		{
 			name: "Missing email",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
 				Email:     "",
 				Password:  "strongpassword",
 			},
-			mockQuery:        &mockAdminRegisterQueries{},
+			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
 			shouldFailHash:   false,
 		},
 		{
 			name: "Missing password",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
 				Email:     "user@example.com",
 				Password:  "",
 			},
-			mockQuery:        &mockAdminRegisterQueries{},
+			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
 			shouldFailHash:   false,
 		},
 		{
 			name: "Missing first name",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "",
 				LastName:  "Doe",
 				Email:     "user@example.com",
 			},
-			mockQuery:        &mockAdminRegisterQueries{},
+			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
 			shouldFailHash:   false,
 		},
 		{
 			name: "Missing last name",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "",
 				Email:     "user@example.com",
 			},
-			mockQuery:        &mockAdminRegisterQueries{},
+			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
 			shouldFailHash:   false,
 		},
 		{
 			name: "Hash failure",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "John",
-				LastName:  "Rambo",
+				LastName:  "Doe",
 				Email:     "user@example.com",
 				Password:  "strongpassword",
 			},
-			mockQuery:        &mockAdminRegisterQueries{},
+			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Could not hash password",
 			shouldFailHash:   true,
 		},
 		{
 			name: "Insert failure",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
 				Email:     "user@example.com",
 				Password:  "strongpassword",
 			},
-			mockQuery: &mockAdminRegisterQueries{
+			mockQuery: &mockRegisterQueries{
 				shouldFailInsert: true,
 			},
 			expectedCode:     http.StatusInternalServerError,
-			expectedContains: "Failed to create admin",
+			expectedContains: "Failed to create user",
 			shouldFailHash:   false,
 		},
 		{
 			name: "Email already registered",
-			requestBody: RegisterAdminRequest{
+			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
-				Email:     fakeEmail,
+				Email:     usedEmail,
 				Password:  "strongpassword",
 			},
-			mockQuery:        &mockAdminRegisterQueries{},
+			mockQuery:        &mockRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email already registered",
 			shouldFailHash:   false,
 		},
 		{
-			name: "Unable to retrieve new admin",
-			requestBody: RegisterAdminRequest{
+			name: "Unable to retrieve new user",
+			requestBody: RegisterRequest{
 				FirstName: "John",
 				LastName:  "Doe",
 				Email:     "user@example.com",
 				Password:  "strongpassword",
 			},
-			mockQuery: &mockAdminRegisterQueries{
+			mockQuery: &mockRegisterQueries{
 				shouldFailFetch: true,
 			},
 			expectedCode:     http.StatusInternalServerError,
-			expectedContains: "Unable to fetch admin",
+			expectedContains: "Unable to fetch new user",
 			shouldFailHash:   false,
 		},
 	}
@@ -205,7 +205,7 @@ func TestRegisterAdminHandler(t *testing.T) {
 
 			defer func() { HashPasswordFn = oldHash }()
 
-			handler := RegisterAdminHandler(tt.mockQuery)
+			handler := RegisterHandler(tt.mockQuery)
 
 			jsonData, _ := json.Marshal(tt.requestBody)
 			req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(jsonData))
@@ -225,25 +225,32 @@ func TestRegisterAdminHandler(t *testing.T) {
 	}
 }
 
-type mockAdminQuerier struct {
-	GetAdminByEmailFn func(ctx context.Context, email string) (db.Admin, error)
+type mockUserQuerier struct {
+	GetUserByEmailFn func(ctx context.Context, email string) (db.User, error)
+	DeleteUserFn     func(ctx context.Context, id uuid.UUID) error
 }
 
-func (m *mockAdminQuerier) CreateAdmin(ctx context.Context, p db.CreateAdminParams) error {
+func (m *mockUserQuerier) CreateUser(ctx context.Context, p db.CreateUserParams) error {
 	return nil
 }
 
-func (m *mockAdminQuerier) GetAdminByEmail(ctx context.Context, email string) (db.Admin, error) {
-	return m.GetAdminByEmailFn(ctx, email)
+func (m *mockUserQuerier) GetUserByEmail(ctx context.Context, email string) (db.User, error) {
+	return m.GetUserByEmailFn(ctx, email)
+}
+func (m *mockUserQuerier) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	return m.DeleteUserFn(ctx, id)
+}
+func (m *mockUserQuerier) UpdateUser(_ context.Context, _ db.UpdateUserParams) error {
+	return nil
 }
 
-func TestLoginAdminHandler(t *testing.T) {
+func TestLoginHandler(t *testing.T) {
 	plain := "plain-password"
 	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.MinCost)
 	if err != nil {
 		t.Fatalf("could not hash password: %v", err)
 	}
-	mockAdmin := db.Admin{
+	mockUser := db.User{
 		ID:           uuid.New(),
 		Email:        "email@example.com",
 		PasswordHash: string(hash),
@@ -255,7 +262,7 @@ func TestLoginAdminHandler(t *testing.T) {
 		name             string
 		secret           string
 		body             any
-		mockGet          func(ctx context.Context, email string) (db.Admin, error)
+		mockGet          func(ctx context.Context, email string) (db.User, error)
 		expectedCode     int
 		expectedContains string
 		shouldFailSign   bool
@@ -263,9 +270,9 @@ func TestLoginAdminHandler(t *testing.T) {
 		{
 			name:   "Successful login",
 			secret: "testsecret",
-			body:   LoginAdminRequest{Email: mockAdmin.Email, Password: plain},
-			mockGet: func(_ context.Context, email string) (db.Admin, error) {
-				return mockAdmin, nil
+			body:   LoginRequest{Email: mockUser.Email, Password: plain},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
 			},
 			expectedCode:     http.StatusOK,
 			expectedContains: `"token":`,
@@ -274,9 +281,9 @@ func TestLoginAdminHandler(t *testing.T) {
 		{
 			name:   "Wrong password",
 			secret: "testsecret",
-			body:   LoginAdminRequest{Email: mockAdmin.Email, Password: "wrongpass"},
-			mockGet: func(_ context.Context, email string) (db.Admin, error) {
-				return mockAdmin, nil
+			body:   LoginRequest{Email: mockUser.Email, Password: "wrongpass"},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
 			},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Invalid credentials",
@@ -285,9 +292,9 @@ func TestLoginAdminHandler(t *testing.T) {
 		{
 			name:   "Unknown email",
 			secret: "testsecret",
-			body:   LoginAdminRequest{Email: "no@one.com", Password: "irrelevant"},
-			mockGet: func(_ context.Context, email string) (db.Admin, error) {
-				return db.Admin{}, errors.New("sql: no rows")
+			body:   LoginRequest{Email: "no@one.com", Password: "irrelevant"},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return db.User{}, errors.New("sql: no rows")
 			},
 			expectedCode:     http.StatusUnauthorized,
 			expectedContains: "Invalid credentials",
@@ -296,9 +303,9 @@ func TestLoginAdminHandler(t *testing.T) {
 		{
 			name:   "Missing email",
 			secret: "testsecret",
-			body:   LoginAdminRequest{Email: "", Password: plain},
-			mockGet: func(_ context.Context, email string) (db.Admin, error) {
-				return mockAdmin, nil
+			body:   LoginRequest{Email: "", Password: plain},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
 			},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
@@ -309,26 +316,26 @@ func TestLoginAdminHandler(t *testing.T) {
 			secret:         "testsecret",
 			body:           `{ not json }`,
 			mockGet:        nil,
-			expectedCode:   http.StatusInternalServerError,
+			expectedCode:   http.StatusBadRequest,
 			shouldFailSign: false,
 		},
 		{
 			name:   "Missing JWT_SECRET",
 			secret: "",
-			body:   LoginAdminRequest{Email: mockAdmin.Email, Password: plain},
-			mockGet: func(_ context.Context, email string) (db.Admin, error) {
-				return mockAdmin, nil
+			body:   LoginRequest{Email: mockUser.Email, Password: plain},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Missing JWT_SECRET",
 			shouldFailSign:   false,
 		},
 		{
-			name:   "Sign token failure",
+			name:   "Sign token error",
 			secret: "testsecret",
-			body:   LoginAdminRequest{Email: mockAdmin.Email, Password: plain},
-			mockGet: func(_ context.Context, email string) (db.Admin, error) {
-				return mockAdmin, nil
+			body:   LoginRequest{Email: mockUser.Email, Password: plain},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Failed to sign token",
@@ -351,8 +358,8 @@ func TestLoginAdminHandler(t *testing.T) {
 			t.Cleanup(func() { os.Setenv("JWT_SECRET", old) })
 			os.Setenv("JWT_SECRET", tt.secret)
 
-			mockQ := &mockAdminQuerier{GetAdminByEmailFn: tt.mockGet}
-			handler := LoginAdminHandler(mockQ)
+			mockQ := &mockUserQuerier{GetUserByEmailFn: tt.mockGet}
+			handler := LoginHandler(mockQ)
 
 			var buf bytes.Buffer
 			if s, ok := tt.body.(string); ok {

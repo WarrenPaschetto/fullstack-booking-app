@@ -11,6 +11,7 @@ type UserQuerier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
+	//ListAllUsers(ctx context.Context) ([]User, error)
 }
 
 type BookingQuerier interface {
@@ -20,10 +21,4 @@ type BookingQuerier interface {
 	RescheduleBooking(ctx context.Context, arg RescheduleBookingParams) (Booking, error)
 	GetBookingByID(ctx context.Context, bookingID uuid.UUID) (Booking, error)
 	ListBookingsForUser(ctx context.Context, userID uuid.UUID) ([]Booking, error)
-	ListAllBookingsForAdmin(ctx context.Context) ([]Booking, error)
-}
-
-type AdminQuerier interface {
-	CreateAdmin(ctx context.Context, arg CreateAdminParams) error
-	GetAdminByEmail(ctx context.Context, email string) (Admin, error)
 }

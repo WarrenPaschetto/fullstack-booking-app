@@ -9,7 +9,8 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user',
 );
 
 CREATE TABLE bookings (
@@ -21,12 +22,5 @@ CREATE TABLE bookings (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE admins (
-    id UUID PRIMARY KEY NOT NULL,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL
-);
+ALTER TABLE users
+  ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
