@@ -15,6 +15,7 @@ import (
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -266,6 +267,7 @@ func TestLoginHandler(t *testing.T) {
 		mockGet          func(ctx context.Context, email string) (db.User, error)
 		expectedCode     int
 		expectedContains string
+		shouldFailSign   bool
 	}{
 		{
 			name:   "Successful login",
@@ -276,6 +278,7 @@ func TestLoginHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusOK,
 			expectedContains: `"token":`,
+			shouldFailSign:   false,
 		},
 		{
 			name:   "Wrong password",
@@ -286,6 +289,7 @@ func TestLoginHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Invalid credentials",
+			shouldFailSign:   false,
 		},
 		{
 			name:   "Unknown email",
@@ -296,6 +300,7 @@ func TestLoginHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusUnauthorized,
 			expectedContains: "Invalid credentials",
+			shouldFailSign:   false,
 		},
 		{
 			name:   "Missing email",
@@ -306,13 +311,15 @@ func TestLoginHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			shouldFailSign:   false,
 		},
 		{
-			name:         "Malformed JSON",
-			secret:       "testsecret",
-			body:         `{ not json }`,
-			mockGet:      nil,
-			expectedCode: http.StatusBadRequest,
+			name:           "Malformed JSON",
+			secret:         "testsecret",
+			body:           `{ not json }`,
+			mockGet:        nil,
+			expectedCode:   http.StatusBadRequest,
+			shouldFailSign: false,
 		},
 		{
 			name:   "Missing JWT_SECRET",
@@ -323,11 +330,32 @@ func TestLoginHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Missing JWT_SECRET",
+			shouldFailSign:   false,
+		},
+		{
+			name:   "Sign token error",
+			secret: "testsecret",
+			body:   LoginRequest{Email: mockUser.Email, Password: plain},
+			mockGet: func(_ context.Context, email string) (db.User, error) {
+				return mockUser, nil
+			},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Failed to sign token",
+			shouldFailSign:   true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			oldSign := SignTokenFn
+			if tt.shouldFailSign {
+				SignTokenFn = func(_ *jwt.Token, _ []byte) (string, error) {
+					return "", errors.New("simulated sign error")
+				}
+			}
+			defer func() { SignTokenFn = oldSign }()
+
 			old := os.Getenv("JWT_SECRET")
 			t.Cleanup(func() { os.Setenv("JWT_SECRET", old) })
 			os.Setenv("JWT_SECRET", tt.secret)

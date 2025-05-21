@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -63,6 +64,7 @@ func TestRegisterAdminHandler(t *testing.T) {
 		mockQuery        *mockAdminRegisterQueries
 		expectedCode     int
 		expectedContains string
+		shouldFailHash   bool
 	}{
 		{
 			name: "Valid registration",
@@ -72,14 +74,16 @@ func TestRegisterAdminHandler(t *testing.T) {
 				Email:     "user@example.com",
 				Password:  "strongpassword",
 			},
-			mockQuery:    &mockAdminRegisterQueries{},
-			expectedCode: http.StatusCreated,
+			mockQuery:      &mockAdminRegisterQueries{},
+			expectedCode:   http.StatusCreated,
+			shouldFailHash: false,
 		},
 		{
-			name:         "Invalid request body",
-			requestBody:  "{ this is an invalid request body",
-			mockQuery:    &mockAdminRegisterQueries{},
-			expectedCode: http.StatusInternalServerError,
+			name:           "Invalid request body",
+			requestBody:    "{ this is an invalid request body",
+			mockQuery:      &mockAdminRegisterQueries{},
+			expectedCode:   http.StatusInternalServerError,
+			shouldFailHash: false,
 		},
 		{
 			name: "Missing email",
@@ -92,6 +96,7 @@ func TestRegisterAdminHandler(t *testing.T) {
 			mockQuery:        &mockAdminRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing password",
@@ -104,6 +109,7 @@ func TestRegisterAdminHandler(t *testing.T) {
 			mockQuery:        &mockAdminRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing first name",
@@ -115,6 +121,7 @@ func TestRegisterAdminHandler(t *testing.T) {
 			mockQuery:        &mockAdminRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Missing last name",
@@ -126,6 +133,20 @@ func TestRegisterAdminHandler(t *testing.T) {
 			mockQuery:        &mockAdminRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "First and last name required",
+			shouldFailHash:   false,
+		},
+		{
+			name: "Hash failure",
+			requestBody: RegisterAdminRequest{
+				FirstName: "John",
+				LastName:  "Rambo",
+				Email:     "user@example.com",
+				Password:  "strongpassword",
+			},
+			mockQuery:        &mockAdminRegisterQueries{},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Could not hash password",
+			shouldFailHash:   true,
 		},
 		{
 			name: "Insert failure",
@@ -140,6 +161,7 @@ func TestRegisterAdminHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Failed to create admin",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Email already registered",
@@ -152,6 +174,7 @@ func TestRegisterAdminHandler(t *testing.T) {
 			mockQuery:        &mockAdminRegisterQueries{},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email already registered",
+			shouldFailHash:   false,
 		},
 		{
 			name: "Unable to retrieve new admin",
@@ -166,11 +189,22 @@ func TestRegisterAdminHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Unable to fetch admin",
+			shouldFailHash:   false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			oldHash := HashPasswordFn
+			if tt.shouldFailHash {
+				HashPasswordFn = func(_ []byte, _ int) ([]byte, error) {
+					return nil, errors.New("simulated hash error")
+				}
+			}
+
+			defer func() { HashPasswordFn = oldHash }()
+
 			handler := RegisterAdminHandler(tt.mockQuery)
 
 			jsonData, _ := json.Marshal(tt.requestBody)
@@ -224,6 +258,7 @@ func TestLoginAdminHandler(t *testing.T) {
 		mockGet          func(ctx context.Context, email string) (db.Admin, error)
 		expectedCode     int
 		expectedContains string
+		shouldFailSign   bool
 	}{
 		{
 			name:   "Successful login",
@@ -234,6 +269,7 @@ func TestLoginAdminHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusOK,
 			expectedContains: `"token":`,
+			shouldFailSign:   false,
 		},
 		{
 			name:   "Wrong password",
@@ -244,6 +280,7 @@ func TestLoginAdminHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Invalid credentials",
+			shouldFailSign:   false,
 		},
 		{
 			name:   "Unknown email",
@@ -254,6 +291,7 @@ func TestLoginAdminHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusUnauthorized,
 			expectedContains: "Invalid credentials",
+			shouldFailSign:   false,
 		},
 		{
 			name:   "Missing email",
@@ -264,13 +302,15 @@ func TestLoginAdminHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Email and password required",
+			shouldFailSign:   false,
 		},
 		{
-			name:         "Malformed JSON",
-			secret:       "testsecret",
-			body:         `{ not json }`,
-			mockGet:      nil,
-			expectedCode: http.StatusInternalServerError,
+			name:           "Malformed JSON",
+			secret:         "testsecret",
+			body:           `{ not json }`,
+			mockGet:        nil,
+			expectedCode:   http.StatusInternalServerError,
+			shouldFailSign: false,
 		},
 		{
 			name:   "Missing JWT_SECRET",
@@ -281,11 +321,32 @@ func TestLoginAdminHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Missing JWT_SECRET",
+			shouldFailSign:   false,
+		},
+		{
+			name:   "Sign token failure",
+			secret: "testsecret",
+			body:   LoginAdminRequest{Email: mockAdmin.Email, Password: plain},
+			mockGet: func(_ context.Context, email string) (db.Admin, error) {
+				return mockAdmin, nil
+			},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Failed to sign token",
+			shouldFailSign:   true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			oldSign := SignTokenFn
+			if tt.shouldFailSign {
+				SignTokenFn = func(_ *jwt.Token, _ []byte) (string, error) {
+					return "", errors.New("simulated sign error")
+				}
+			}
+			defer func() { SignTokenFn = oldSign }()
+
 			old := os.Getenv("JWT_SECRET")
 			t.Cleanup(func() { os.Setenv("JWT_SECRET", old) })
 			os.Setenv("JWT_SECRET", tt.secret)

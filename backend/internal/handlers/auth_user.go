@@ -54,6 +54,9 @@ type UpdateUserRequest struct {
 }
 
 var HashPasswordFn = bcrypt.GenerateFromPassword
+var SignTokenFn = func(tok *jwt.Token, secret []byte) (string, error) {
+	return tok.SignedString(secret)
+}
 
 func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -159,7 +162,7 @@ func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
 			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})
 
-		tokenString, err := token.SignedString([]byte(secret))
+		tokenString, err := SignTokenFn(token, []byte(secret))
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to sign token", err)
 			return

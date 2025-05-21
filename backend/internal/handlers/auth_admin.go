@@ -65,7 +65,7 @@ func RegisterAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
 			return
 		}
 
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		hashedPassword, err := HashPasswordFn([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Could not hash password", err)
 			return
@@ -144,7 +144,7 @@ func LoginAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
 			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})
 
-		tokenString, err := token.SignedString([]byte(secret))
+		tokenString, err := SignTokenFn(token, []byte(secret))
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to sign token", err)
 			return
