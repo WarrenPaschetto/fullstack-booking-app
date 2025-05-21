@@ -15,6 +15,10 @@ type contextKey string
 
 const UserIDKey contextKey = "user_id"
 
+var ParseTokenFn = func(tokenString string, keyFunc jwt.Keyfunc) (*jwt.Token, error) {
+	return jwt.Parse(tokenString, keyFunc)
+}
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -30,7 +34,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		token, err := ParseTokenFn(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
