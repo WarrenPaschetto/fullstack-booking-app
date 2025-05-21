@@ -11,7 +11,7 @@ type UserQuerier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
-	//ListAllUsers(ctx context.Context) ([]User, error)
+	ListUsers(ctx context.Context) ([]User, error)
 }
 
 type BookingQuerier interface {

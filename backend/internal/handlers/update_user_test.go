@@ -46,6 +46,9 @@ func (m *mockUpdateQueries) CreateUser(_ context.Context, _ db.CreateUserParams)
 func (m *mockUpdateQueries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
+func (m *mockUpdateQueries) ListUsers(ctx context.Context) ([]db.User, error) {
+	return []db.User{}, nil
+}
 
 func TestUpdateUserHandler(t *testing.T) {
 	fakeUserId := uuid.New()
