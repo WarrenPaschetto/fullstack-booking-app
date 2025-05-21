@@ -1,11 +1,12 @@
 -- name: CreateUser :exec
-INSERT INTO users (id, first_name, last_name, created_at, updated_at, email, password_hash)
+INSERT INTO users (id, first_name, last_name, created_at, updated_at, email, password_hash, role)
 VALUES (
     uuid(), 
     ?,
     ?,
     CURRENT_TIMESTAMP, 
     CURRENT_TIMESTAMP, 
+    ?,
     ?,
     ?
 );

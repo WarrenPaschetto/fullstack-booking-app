@@ -14,44 +14,48 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type RegisterAdminRequest struct {
+type RegisterRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 }
 
-type RegisterAdminResponse struct {
-	ID           uuid.UUID `json:"id"`
-	FirstName    string    `json:"first_name"`
-	LastName     string    `json:"last_name"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"password_hash"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+type RegisterResponse struct {
+	ID        uuid.UUID `json:"id"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type LoginAdminRequest struct {
+type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type LoginAdminResponse struct {
+type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-func RegisterAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
+var HashPasswordFn = bcrypt.GenerateFromPassword
+var SignTokenFn = func(tok *jwt.Token, secret []byte) (string, error) {
+	return tok.SignedString(secret)
+}
+
+func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		type response struct {
-			RegisterAdminResponse
+			RegisterResponse
 		}
 
 		decoder := json.NewDecoder(r.Body)
-		req := RegisterAdminRequest{}
+		req := RegisterRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
 
@@ -71,47 +75,48 @@ func RegisterAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
 			return
 		}
 
-		err = queries.CreateAdmin(r.Context(), db.CreateAdminParams{
+		err = queries.CreateUser(r.Context(), db.CreateUserParams{
 			FirstName:    req.FirstName,
 			LastName:     req.LastName,
 			Email:        req.Email,
 			PasswordHash: string(hashedPassword),
+			Role:         "user",
 		})
 		if err != nil {
-			if strings.Contains(err.Error(), "UNIQUE constraint failed: admin.email") {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed: users.email") {
 				utils.RespondWithError(w, http.StatusBadRequest, "Email already registered", nil)
 				return
 			}
-			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create admin", err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create user", err)
 			return
 		}
 
-		admin, err := queries.GetAdminByEmail(r.Context(), req.Email)
+		user, err := queries.GetUserByEmail(r.Context(), req.Email)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to fetch admin", err)
+			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to fetch new user", err)
 			return
 		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, response{
-			RegisterAdminResponse: RegisterAdminResponse{
-				ID:        admin.ID,
-				FirstName: admin.FirstName,
-				LastName:  admin.LastName,
-				Email:     admin.Email,
-				CreatedAt: admin.CreatedAt,
-				UpdatedAt: admin.UpdatedAt,
+			RegisterResponse: RegisterResponse{
+				ID:        user.ID,
+				FirstName: user.FirstName,
+				LastName:  user.LastName,
+				Email:     user.Email,
+				CreatedAt: user.CreatedAt,
+				UpdatedAt: user.UpdatedAt,
 			},
 		})
 	}
 }
 
-func LoginAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
+func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
-		req := LoginAdminRequest{}
+		req := LoginRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Invalid request body", err)
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
 
@@ -120,13 +125,13 @@ func LoginAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
 			return
 		}
 
-		admin, err := queries.GetAdminByEmail(r.Context(), req.Email)
+		user, err := queries.GetUserByEmail(r.Context(), req.Email)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid credentials", err)
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(req.Password))
+		err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 		if err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid credentials", err)
 			return
@@ -139,7 +144,7 @@ func LoginAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub": admin.ID,
+			"sub": user.ID,
 			"iat": jwt.NewNumericDate(time.Now()),
 			"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})
@@ -150,6 +155,6 @@ func LoginAdminHandler(queries db.AdminQuerier) http.HandlerFunc {
 			return
 		}
 
-		utils.RespondWithJSON(w, http.StatusOK, LoginAdminResponse{Token: tokenString})
+		utils.RespondWithJSON(w, http.StatusOK, LoginResponse{Token: tokenString})
 	}
 }
