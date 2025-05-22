@@ -30,13 +30,7 @@ SELECT * From bookings
 ORDER BY appointment_start;
 
 -- name: GetOverlappingBookings :many
-SELECT
-  id,
-  created_at,
-  updated_at,
-  appointment_start,
-  duration_minutes,
-  user_id
+SELECT *
 FROM bookings
 WHERE 
   appointment_start < :new_end

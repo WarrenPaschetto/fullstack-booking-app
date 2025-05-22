@@ -88,13 +88,7 @@ func (q *Queries) GetBookingByID(ctx context.Context, id uuid.UUID) (Booking, er
 }
 
 const getOverlappingBookings = `-- name: GetOverlappingBookings :many
-SELECT
-  id,
-  created_at,
-  updated_at,
-  appointment_start,
-  duration_minutes,
-  user_id
+SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id
 FROM bookings
 WHERE 
   appointment_start < ?1
@@ -106,24 +100,15 @@ type GetOverlappingBookingsParams struct {
 	NewStart time.Time
 }
 
-type GetOverlappingBookingsRow struct {
-	ID               uuid.UUID
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	AppointmentStart time.Time
-	DurationMinutes  int64
-	UserID           uuid.UUID
-}
-
-func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlappingBookingsParams) ([]GetOverlappingBookingsRow, error) {
+func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlappingBookingsParams) ([]Booking, error) {
 	rows, err := q.db.QueryContext(ctx, getOverlappingBookings, arg.NewEnd, arg.NewStart)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetOverlappingBookingsRow
+	var items []Booking
 	for rows.Next() {
-		var i GetOverlappingBookingsRow
+		var i Booking
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -131,6 +116,7 @@ func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlapping
 			&i.AppointmentStart,
 			&i.DurationMinutes,
 			&i.UserID,
+			&i.SlotID,
 		); err != nil {
 			return nil, err
 		}
