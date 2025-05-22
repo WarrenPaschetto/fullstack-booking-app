@@ -22,7 +22,7 @@ VALUES (
     ?,
     ?
 )
-RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id
+RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id
 `
 
 type CreateBookingParams struct {
@@ -47,6 +47,7 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 		&i.AppointmentStart,
 		&i.DurationMinutes,
 		&i.UserID,
+		&i.SlotID,
 	)
 	return i, err
 }
@@ -67,7 +68,7 @@ func (q *Queries) DeleteBooking(ctx context.Context, arg DeleteBookingParams) er
 }
 
 const getBookingByID = `-- name: GetBookingByID :one
-SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id FROM bookings
+SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id FROM bookings
 WHERE id = ?
 `
 
@@ -81,18 +82,13 @@ func (q *Queries) GetBookingByID(ctx context.Context, id uuid.UUID) (Booking, er
 		&i.AppointmentStart,
 		&i.DurationMinutes,
 		&i.UserID,
+		&i.SlotID,
 	)
 	return i, err
 }
 
 const getOverlappingBookings = `-- name: GetOverlappingBookings :many
-SELECT
-  id,
-  created_at,
-  updated_at,
-  appointment_start,
-  duration_minutes,
-  user_id
+SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id
 FROM bookings
 WHERE 
   appointment_start < ?1
@@ -120,6 +116,7 @@ func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlapping
 			&i.AppointmentStart,
 			&i.DurationMinutes,
 			&i.UserID,
+			&i.SlotID,
 		); err != nil {
 			return nil, err
 		}
@@ -135,7 +132,7 @@ func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlapping
 }
 
 const listAllBookingsForAdmin = `-- name: ListAllBookingsForAdmin :many
-SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id From bookings
+SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id From bookings
 ORDER BY appointment_start
 `
 
@@ -155,6 +152,7 @@ func (q *Queries) ListAllBookingsForAdmin(ctx context.Context) ([]Booking, error
 			&i.AppointmentStart,
 			&i.DurationMinutes,
 			&i.UserID,
+			&i.SlotID,
 		); err != nil {
 			return nil, err
 		}
@@ -170,7 +168,7 @@ func (q *Queries) ListAllBookingsForAdmin(ctx context.Context) ([]Booking, error
 }
 
 const listBookingsForUser = `-- name: ListBookingsForUser :many
-SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id FROM bookings
+SELECT id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id FROM bookings
 WHERE user_id = ?
 ORDER BY appointment_start
 `
@@ -191,6 +189,7 @@ func (q *Queries) ListBookingsForUser(ctx context.Context, userID uuid.UUID) ([]
 			&i.AppointmentStart,
 			&i.DurationMinutes,
 			&i.UserID,
+			&i.SlotID,
 		); err != nil {
 			return nil, err
 		}
@@ -209,7 +208,7 @@ const rescheduleBooking = `-- name: RescheduleBooking :one
 UPDATE bookings
 SET appointment_start = ?
 WHERE id = ?
-RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id
+RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id
 `
 
 type RescheduleBookingParams struct {
@@ -227,6 +226,7 @@ func (q *Queries) RescheduleBooking(ctx context.Context, arg RescheduleBookingPa
 		&i.AppointmentStart,
 		&i.DurationMinutes,
 		&i.UserID,
+		&i.SlotID,
 	)
 	return i, err
 }
