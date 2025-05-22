@@ -1,36 +1,5 @@
-PRAGMA foreign_keys = ON;
+-- +goose Up
 
--- clean up
-DROP TRIGGER IF EXISTS check_admin;
-DROP TRIGGER IF EXISTS no_overlap;
-
-DROP TABLE IF EXISTS bookings;
-DROP TABLE IF EXISTS availability;
-DROP TABLE IF EXISTS users;
-
--- users
-CREATE TABLE users (
-    id UUID PRIMARY KEY NOT NULL,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
-    updated_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user'
-);
-
--- bookings
-CREATE TABLE bookings (
-    id UUID PRIMARY KEY NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
-    updated_at TIMESTAMP NOT NULL DEFAULT (datetime('now')),
-    appointment_start TIMESTAMP NOT NULL,
-    duration_minutes INTEGER NOT NULL,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
-);
-
--- availability
 CREATE TABLE availability (
   id             UUID    PRIMARY KEY NOT NULL,
   provider_id    UUID    NOT NULL,
@@ -66,3 +35,9 @@ CREATE TRIGGER no_overlap
 BEGIN
   SELECT RAISE(ABORT, 'time slot overlaps existing one');
 END;
+-- +goose Down
+
+DROP TRIGGER IF EXISTS check_admin;
+DROP TRIGGER IF EXISTS no_overlap;
+
+DROP TABLE IF EXISTS availability;
