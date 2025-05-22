@@ -15,6 +15,7 @@ type mockBookingQueries struct {
 	GetBookingByIDFn          func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
 	ListBookingsForUserFn     func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
 	ListAllBookingsForAdminFn func(ctx context.Context) ([]db.Booking, error)
+	CreateAvailabilityFn      func(ctx context.Context, arg db.CreateAvailabilityParams) error
 }
 
 func (m *mockBookingQueries) CreateBooking(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error) {
@@ -40,4 +41,7 @@ func (m *mockBookingQueries) ListBookingsForUser(ctx context.Context, id uuid.UU
 }
 func (m *mockBookingQueries) ListAllBookingsForAdmin(ctx context.Context) ([]db.Booking, error) {
 	return m.ListAllBookingsForAdminFn(ctx)
+}
+func (m *mockBookingQueries) CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) error {
+	return m.CreateAvailabilityFn(ctx, arg)
 }

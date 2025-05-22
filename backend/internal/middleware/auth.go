@@ -78,3 +78,9 @@ func IsAdminFromContext(ctx context.Context) bool {
 	isAdmin, _ := v.(bool)
 	return isAdmin
 }
+
+func UserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
+	v := ctx.Value(UserIDKey)
+	id, ok := v.(uuid.UUID)
+	return id, ok
+}
