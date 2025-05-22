@@ -10,14 +10,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type Admin struct {
-	ID           uuid.UUID
-	FirstName    string
-	LastName     string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	Email        string
-	PasswordHash string
+type Availability struct {
+	ID         uuid.UUID
+	ProviderID uuid.UUID
+	StartTime  time.Time
+	EndTime    time.Time
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+type AvailabilityPattern struct {
+	ID         uuid.UUID
+	ProviderID uuid.UUID
+	DayOfWeek  int64
+	StartTime  interface{}
+	EndTime    interface{}
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type Booking struct {
@@ -27,6 +36,7 @@ type Booking struct {
 	AppointmentStart time.Time
 	DurationMinutes  int64
 	UserID           uuid.UUID
+	SlotID           interface{}
 }
 
 type User struct {
