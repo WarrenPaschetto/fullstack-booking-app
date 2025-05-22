@@ -15,20 +15,27 @@ import (
 const createAvailability = `-- name: CreateAvailability :exec
 INSERT INTO availability (id, provider_id, start_time, end_time)
 VALUES (
-    uuid(),
-    uuid(),
+    ?,
+    ?,
     ?,
     ?
 )
 `
 
 type CreateAvailabilityParams struct {
-	StartTime time.Time
-	EndTime   time.Time
+	ID         uuid.UUID
+	ProviderID uuid.UUID
+	StartTime  time.Time
+	EndTime    time.Time
 }
 
 func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) error {
-	_, err := q.db.ExecContext(ctx, createAvailability, arg.StartTime, arg.EndTime)
+	_, err := q.db.ExecContext(ctx, createAvailability,
+		arg.ID,
+		arg.ProviderID,
+		arg.StartTime,
+		arg.EndTime,
+	)
 	return err
 }
 

@@ -1,8 +1,8 @@
 -- name: CreateAvailability :exec
 INSERT INTO availability (id, provider_id, start_time, end_time)
 VALUES (
-    uuid(),
-    uuid(),
+    ?,
+    ?,
     ?,
     ?
 );
