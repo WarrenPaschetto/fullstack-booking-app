@@ -8,7 +8,8 @@ VALUES (
 );
 
 -- name: DeleteAvailability :exec
-DELETE FROM availability WHERE id = ?;
+DELETE FROM availability WHERE id = ?
+AND provider_id = ?;
 
 -- name: ListAvailabilityByProvider :many
 SELECT
