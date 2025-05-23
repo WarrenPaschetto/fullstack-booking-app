@@ -227,3 +227,43 @@ func TestIsAdminFromContext(t *testing.T) {
 		})
 	}
 }
+
+func TestUserIDFromContext(t *testing.T) {
+	validID := uuid.New()
+
+	tests := []struct {
+		name   string
+		ctx    context.Context
+		wantID uuid.UUID
+		wantOK bool
+	}{
+		{
+			name:   "No value",
+			ctx:    context.Background(),
+			wantOK: false,
+		},
+		{
+			name:   "Valid UUID",
+			ctx:    context.WithValue(context.Background(), UserIDKey, validID),
+			wantID: validID,
+			wantOK: true,
+		},
+		{
+			name:   "Wrong type",
+			ctx:    context.WithValue(context.Background(), UserIDKey, "not-a-uuid"),
+			wantOK: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotID, ok := UserIDFromContext(tt.ctx)
+			if ok != tt.wantOK {
+				t.Errorf("got ok=%v; want %v", ok, tt.wantOK)
+			}
+			if ok && gotID != tt.wantID {
+				t.Errorf("got id=%v; want %v", gotID, tt.wantID)
+			}
+		})
+	}
+}
