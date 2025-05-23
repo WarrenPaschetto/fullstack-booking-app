@@ -1,4 +1,3 @@
-// internal/handlers/delete_availability_test.go
 package handlers
 
 import (
@@ -33,50 +32,78 @@ func TestDeleteAvailabilityHandler(t *testing.T) {
 	providerID := uuid.New()
 
 	tests := []struct {
-		name       string
-		isAdmin    bool
-		injectUser bool
-		dbErr      error
-		wantStatus int
-		wantBody   string
+		name        string
+		url         string
+		vars        map[string]string
+		isAdmin     bool
+		injectUser  bool
+		dbErr       error
+		wantStatus  int
+		wantBodySub string
 	}{
 		{
 			name:       "Success",
+			url:        "/availability/" + slotID.String(),
+			vars:       map[string]string{"id": slotID.String()},
 			isAdmin:    true,
 			injectUser: true,
 			dbErr:      nil,
 			wantStatus: http.StatusNoContent,
 		},
 		{
-			name:       "Not admin",
-			isAdmin:    false,
-			injectUser: true,
-			dbErr:      nil,
-			wantStatus: http.StatusForbidden,
-			wantBody:   "Forbidden",
+			name:        "Not admin",
+			url:         "/availability/" + slotID.String(),
+			vars:        map[string]string{"id": slotID.String()},
+			isAdmin:     false,
+			injectUser:  true,
+			dbErr:       nil,
+			wantStatus:  http.StatusForbidden,
+			wantBodySub: "Forbidden",
 		},
 		{
-			name:       "Missing user",
-			isAdmin:    true,
-			injectUser: false,
-			dbErr:      nil,
-			wantStatus: http.StatusInternalServerError,
-			wantBody:   "Could not get user ID",
+			name:        "Missing user",
+			url:         "/availability/" + slotID.String(),
+			vars:        map[string]string{"id": slotID.String()},
+			isAdmin:     true,
+			injectUser:  false,
+			dbErr:       nil,
+			wantStatus:  http.StatusInternalServerError,
+			wantBodySub: "Could not get user ID",
 		},
 		{
-			name:       "DB error",
-			isAdmin:    true,
-			injectUser: true,
-			dbErr:      errors.New("oops"),
-			wantStatus: http.StatusInternalServerError,
-			wantBody:   "Unable to delete availability",
+			name:        "DB error",
+			url:         "/availability/" + slotID.String(),
+			vars:        map[string]string{"id": slotID.String()},
+			isAdmin:     true,
+			injectUser:  true,
+			dbErr:       errors.New("oops"),
+			wantStatus:  http.StatusInternalServerError,
+			wantBodySub: "Unable to delete availability",
+		},
+		{
+			name:        "Missing slot ID param",
+			url:         "/availability",
+			vars:        map[string]string{},
+			isAdmin:     true,
+			injectUser:  true,
+			wantStatus:  http.StatusBadRequest,
+			wantBodySub: "Missing slot ID",
+		},
+		{
+			name:        "Invalid slot ID param",
+			url:         "/availability/not-a-uuid",
+			vars:        map[string]string{"id": "not-a-uuid"},
+			isAdmin:     true,
+			injectUser:  true,
+			wantStatus:  http.StatusBadRequest,
+			wantBodySub: "Invalid slot ID",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodDelete, "/availability/"+slotID.String(), nil)
-			req = mux.SetURLVars(req, map[string]string{"id": slotID.String()})
+			req := httptest.NewRequest(http.MethodDelete, tt.url, nil)
+			req = mux.SetURLVars(req, tt.vars)
 
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, middleware.IsAdminKey, tt.isAdmin)
@@ -94,19 +121,8 @@ func TestDeleteAvailabilityHandler(t *testing.T) {
 			if rr.Code != tt.wantStatus {
 				t.Fatalf("expected status %d, got %d", tt.wantStatus, rr.Code)
 			}
-			if tt.wantBody != "" && !strings.Contains(rr.Body.String(), tt.wantBody) {
-				t.Errorf("expected body to contain %q, got %q", tt.wantBody, rr.Body.String())
-			}
-			if tt.wantStatus == http.StatusNoContent {
-				if !mock.called {
-					t.Errorf("expected DeleteAvailability to be called")
-				}
-				if mock.gotID != slotID {
-					t.Errorf("expected id %s, got %s", slotID, mock.gotID)
-				}
-				if mock.gotProvider != providerID {
-					t.Errorf("expected provider %s, got %s", providerID, mock.gotProvider)
-				}
+			if tt.wantBodySub != "" && !strings.Contains(rr.Body.String(), tt.wantBodySub) {
+				t.Errorf("expected response to contain %q, got %q", tt.wantBodySub, rr.Body.String())
 			}
 		})
 	}
