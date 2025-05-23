@@ -66,7 +66,6 @@ func TestCreateAvailabilityHandler(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/availability", bytes.NewReader(b))
 			req.Header.Set("Content-Type", "application/json")
 
-			// 2) inject both admin‐flag and providerID into context
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, middleware.IsAdminKey, tt.injectAdmin)
 			ctx = context.WithValue(ctx, middleware.UserIDKey, providerID)
