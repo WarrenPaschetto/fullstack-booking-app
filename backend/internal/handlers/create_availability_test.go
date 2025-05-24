@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,9 +19,13 @@ import (
 
 type mockAvailabilityQueries struct {
 	db.Queries
+	failCreate bool
 }
 
 func (m *mockAvailabilityQueries) CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) error {
+	if m.failCreate {
+		return errors.New("failure")
+	}
 	return nil
 }
 
@@ -37,6 +43,9 @@ func TestCreateAvailabilityHandler(t *testing.T) {
 		expectedCode     int
 		expectedContains string
 		injectAdmin      bool
+		invalidReqBody   bool
+		injectUserID     bool
+		failCreate       bool
 	}{
 		{
 			name: "Successful availability creation",
@@ -44,8 +53,11 @@ func TestCreateAvailabilityHandler(t *testing.T) {
 				StartTime: time.Now().Add(time.Hour),
 				EndTime:   time.Now().Add(2 * time.Hour),
 			},
-			expectedCode: http.StatusCreated,
-			injectAdmin:  true,
+			expectedCode:   http.StatusCreated,
+			injectAdmin:    true,
+			injectUserID:   true,
+			invalidReqBody: false,
+			failCreate:     false,
 		},
 		{
 			name: "Does not have role of admin",
@@ -56,23 +68,64 @@ func TestCreateAvailabilityHandler(t *testing.T) {
 			expectedCode:     http.StatusForbidden,
 			expectedContains: "Forbidden",
 			injectAdmin:      false,
+			injectUserID:     true,
+			invalidReqBody:   false,
+			failCreate:       false,
+		},
+		{
+			name:             "Not a valid request body",
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "Invalid request body",
+			injectAdmin:      true,
+			injectUserID:     true,
+			invalidReqBody:   true,
+			failCreate:       false,
+		},
+		{
+			name:             "Can't find userID",
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Could not get user ID",
+			injectAdmin:      true,
+			injectUserID:     false,
+			invalidReqBody:   false,
+			failCreate:       false,
+		},
+		{
+			name:             "Failed availability creation",
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Unable to create availability",
+			injectAdmin:      true,
+			injectUserID:     true,
+			invalidReqBody:   false,
+			failCreate:       true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			b, _ := json.Marshal(tt.requestBody)
-			req := httptest.NewRequest(http.MethodPost, "/availability", bytes.NewReader(b))
+			var body io.Reader
+			if tt.invalidReqBody {
+				body = strings.NewReader("{ this is an invalid request body")
+			} else {
+				b, _ := json.Marshal(tt.requestBody)
+				body = bytes.NewReader(b)
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/availability", body)
 			req.Header.Set("Content-Type", "application/json")
 
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, middleware.IsAdminKey, tt.injectAdmin)
-			ctx = context.WithValue(ctx, middleware.UserIDKey, providerID)
+			if tt.injectUserID {
+				ctx = context.WithValue(ctx, middleware.UserIDKey, providerID)
+			}
 			req = req.WithContext(ctx)
 
+			mock := &mockAvailabilityQueries{failCreate: tt.failCreate}
+			handler := CreateAvailabilityHandler(mock)
+
 			rr := httptest.NewRecorder()
-			handler := CreateAvailabilityHandler(&mockAvailabilityQueries{})
 			handler.ServeHTTP(rr, req)
 
 			if rr.Code != tt.expectedCode {
