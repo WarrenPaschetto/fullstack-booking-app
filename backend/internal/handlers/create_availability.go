@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -11,12 +12,16 @@ import (
 	"github.com/google/uuid"
 )
 
+type availabilityCreator interface {
+	CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) error
+}
+
 type createAvailabilityRequest struct {
 	StartTime time.Time `json:"start_time"`
 	EndTime   time.Time `json:"end_time"`
 }
 
-func CreateAvailabilityHandler(queries db.BookingQuerier) http.HandlerFunc {
+func CreateAvailabilityHandler(q availabilityCreator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if !middleware.IsAdminFromContext(r.Context()) {
@@ -45,7 +50,7 @@ func CreateAvailabilityHandler(queries db.BookingQuerier) http.HandlerFunc {
 			EndTime:    req.EndTime,
 		}
 
-		if err := queries.CreateAvailability(r.Context(), arg); err != nil {
+		if err := q.CreateAvailability(r.Context(), arg); err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to create availability", err)
 			return
 		}

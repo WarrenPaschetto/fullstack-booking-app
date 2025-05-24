@@ -21,5 +21,4 @@ type BookingQuerier interface {
 	RescheduleBooking(ctx context.Context, arg RescheduleBookingParams) (Booking, error)
 	GetBookingByID(ctx context.Context, bookingID uuid.UUID) (Booking, error)
 	ListBookingsForUser(ctx context.Context, userID uuid.UUID) ([]Booking, error)
-	CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) error
 }
