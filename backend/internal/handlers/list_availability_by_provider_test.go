@@ -116,8 +116,8 @@ func TestListAvailabilityByProviderHandler(t *testing.T) {
 				t.Fatalf("expected %d items, got %d", len(tt.mockSlots), len(got))
 			}
 			if got[0].ID != sampleSlot.ID ||
-				got[0].StartTime != sampleSlot.StartTime ||
-				got[0].EndTime != sampleSlot.EndTime {
+				!got[0].StartTime.Equal(sampleSlot.StartTime) ||
+				!got[0].EndTime.Equal(sampleSlot.EndTime) {
 				t.Errorf("unexpected slot returned: %+v", got[0])
 			}
 
