@@ -18,11 +18,14 @@ import (
 )
 
 type mockAvailabilityPatternQueries struct {
-	db.Queries
 	failCreate bool
+	called     bool
+	gotParams  db.CreateAvailabilityPatternParams
 }
 
 func (m *mockAvailabilityPatternQueries) CreateAvailabilityPattern(ctx context.Context, arg db.CreateAvailabilityPatternParams) error {
+	m.called = true
+	m.gotParams = arg
 	if m.failCreate {
 		return errors.New("failure")
 	}
@@ -139,6 +142,7 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 
 			var body io.Reader
@@ -149,7 +153,7 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 				body = bytes.NewReader(b)
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/availability", body)
+			req := httptest.NewRequest(http.MethodPost, "/availability/patterns", body)
 			req.Header.Set("Content-Type", "application/json")
 
 			ctx := req.Context()
@@ -168,8 +172,30 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 			if rr.Code != tt.expectedCode {
 				t.Fatalf("expected %d, got %d", tt.expectedCode, rr.Code)
 			}
-			if tt.expectedContains != "" && !strings.Contains(rr.Body.String(), tt.expectedContains) {
-				t.Errorf("body %q does not contain %q", rr.Body.String(), tt.expectedContains)
+			if tt.expectedContains != "" {
+				if !strings.Contains(rr.Body.String(), tt.expectedContains) {
+					t.Errorf("want error %q; got %q", tt.expectedContains, rr.Body.String())
+				}
+				return
+			}
+
+			if !mock.called {
+				t.Error("expected CreateAvailabilityPattern to be called")
+			}
+
+			var got struct {
+				ID        uuid.UUID `json:"id"`
+				DayOfWeek int       `json:"day_of_week"`
+				StartTime time.Time `json:"start_time"`
+				EndTime   time.Time `json:"end_time"`
+			}
+			if err := json.NewDecoder(rr.Body).Decode(&got); err != nil {
+				t.Fatalf("decode success body: %v", err)
+			}
+			if got.DayOfWeek != int(tt.requestBody.DayOfWeek) ||
+				!got.StartTime.Equal(tt.requestBody.StartTime) ||
+				!got.EndTime.Equal(tt.requestBody.EndTime) {
+				t.Errorf("unexpected response %+v", got)
 			}
 		})
 	}
