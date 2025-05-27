@@ -43,6 +43,7 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 		requestBody      AvailPatternRequest
 		expectedCode     int
 		expectedContains string
+		injectUserID     bool
 		injectAdmin      bool
 		invalidReqBody   bool
 		failCreate       bool
@@ -55,6 +56,7 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 				EndTime:   time.Now().Add(2 * time.Hour),
 			},
 			expectedCode:   http.StatusCreated,
+			injectUserID:   true,
 			injectAdmin:    true,
 			invalidReqBody: false,
 			failCreate:     false,
@@ -67,6 +69,7 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusForbidden,
 			expectedContains: "Forbidden",
+			injectUserID:     true,
 			injectAdmin:      false,
 			invalidReqBody:   false,
 			failCreate:       false,
@@ -75,8 +78,37 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 			name:             "Not a valid request body",
 			expectedCode:     http.StatusBadRequest,
 			expectedContains: "Invalid request body",
+			injectUserID:     true,
 			injectAdmin:      true,
 			invalidReqBody:   true,
+			failCreate:       false,
+		},
+		{
+			name: "Invalid day of week request",
+			requestBody: AvailPatternRequest{
+				DayOfWeek: int64(7),
+				StartTime: time.Now().Add(time.Hour),
+				EndTime:   time.Now().Add(2 * time.Hour),
+			},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "day_of_week must be 0 (Sunday) through 6 (Saturday)",
+			injectUserID:     true,
+			injectAdmin:      true,
+			invalidReqBody:   false,
+			failCreate:       false,
+		},
+		{
+			name: "End time before start time",
+			requestBody: AvailPatternRequest{
+				DayOfWeek: int64(5),
+				StartTime: time.Now().Add(2 * time.Hour),
+				EndTime:   time.Now().Add(time.Hour),
+			},
+			expectedCode:     http.StatusBadRequest,
+			expectedContains: "end_time must be after start_time",
+			injectUserID:     true,
+			injectAdmin:      true,
+			invalidReqBody:   false,
 			failCreate:       false,
 		},
 		{
@@ -88,9 +120,21 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 			},
 			expectedCode:     http.StatusInternalServerError,
 			expectedContains: "Unable to create availability pattern",
+			injectUserID:     true,
 			injectAdmin:      true,
 			invalidReqBody:   false,
 			failCreate:       true,
+		},
+		{
+			name: "No user ID",
+			requestBody: AvailPatternRequest{
+				StartTime: time.Now(),
+				EndTime:   time.Now().Add(time.Hour),
+			},
+			expectedCode:     http.StatusInternalServerError,
+			expectedContains: "Could not get user ID",
+			injectUserID:     false,
+			injectAdmin:      true,
 		},
 	}
 
@@ -110,7 +154,9 @@ func TestCreateAvailabilityPatternHandler(t *testing.T) {
 
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, middleware.IsAdminKey, tt.injectAdmin)
-			ctx = context.WithValue(ctx, middleware.UserIDKey, providerID)
+			if tt.injectUserID {
+				ctx = context.WithValue(ctx, middleware.UserIDKey, providerID)
+			}
 			req = req.WithContext(ctx)
 
 			mock := &mockAvailabilityPatternQueries{failCreate: tt.failCreate}
