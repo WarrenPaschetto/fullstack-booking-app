@@ -18,11 +18,14 @@ import (
 )
 
 type mockAvailabilityQueries struct {
-	db.Queries
 	failCreate bool
+	called     bool
+	gotParams  db.CreateAvailabilityParams
 }
 
 func (m *mockAvailabilityQueries) CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) error {
+	m.called = true
+	m.gotParams = arg
 	if m.failCreate {
 		return errors.New("failure")
 	}
@@ -102,6 +105,7 @@ func TestCreateAvailabilityHandler(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 
 			var body io.Reader
@@ -127,6 +131,12 @@ func TestCreateAvailabilityHandler(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
+
+			if rr.Code == http.StatusCreated {
+				if !mock.called {
+					t.Error("expected CreateAvailability to be called")
+				}
+			}
 
 			if rr.Code != tt.expectedCode {
 				t.Fatalf("expected %d, got %d", tt.expectedCode, rr.Code)
