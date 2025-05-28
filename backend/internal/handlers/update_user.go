@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type userUpdater interface {
+	UpdateUser(ctx context.Context, arg db.UpdateUserParams) error
+	GetUserByEmail(ctx context.Context, email string) (db.User, error)
+}
+
 type UpdateUserRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -21,7 +27,7 @@ type UpdateUserRequest struct {
 	Password  string `json:"password"`
 }
 
-func UpdateUserHandler(queries db.UserQuerier) http.HandlerFunc {
+func UpdateUserHandler(u userUpdater) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		type update struct {
@@ -63,7 +69,7 @@ func UpdateUserHandler(queries db.UserQuerier) http.HandlerFunc {
 			Email:        req.Email,
 			PasswordHash: string(hashedPassword),
 		}
-		err = queries.UpdateUser(r.Context(), params)
+		err = u.UpdateUser(r.Context(), params)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -76,7 +82,7 @@ func UpdateUserHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		updated, err := queries.GetUserByEmail(r.Context(), req.Email)
+		updated, err := u.GetUserByEmail(r.Context(), req.Email)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Could not fetch updated user", err)
 			return

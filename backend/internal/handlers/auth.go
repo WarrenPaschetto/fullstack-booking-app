@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -13,6 +14,11 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type userQuerier interface {
+	CreateUser(ctx context.Context, arg db.CreateUserParams) error
+	GetUserByEmail(ctx context.Context, email string) (db.User, error)
+}
 
 type RegisterRequest struct {
 	FirstName string `json:"first_name"`
@@ -45,7 +51,7 @@ var SignTokenFn = func(tok *jwt.Token, secret []byte) (string, error) {
 	return tok.SignedString(secret)
 }
 
-func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
+func RegisterHandler(q userQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		type response struct {
@@ -76,7 +82,7 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		err = queries.CreateUser(r.Context(), db.CreateUserParams{
+		err = q.CreateUser(r.Context(), db.CreateUserParams{
 			FirstName:    req.FirstName,
 			LastName:     req.LastName,
 			Email:        req.Email,
@@ -92,7 +98,7 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		user, err := queries.GetUserByEmail(r.Context(), req.Email)
+		user, err := q.GetUserByEmail(r.Context(), req.Email)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to fetch new user", err)
 			return
@@ -111,7 +117,7 @@ func RegisterHandler(queries db.UserQuerier) http.HandlerFunc {
 	}
 }
 
-func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
+func LoginHandler(q userQuerier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		req := LoginRequest{}
@@ -126,7 +132,7 @@ func LoginHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		user, err := queries.GetUserByEmail(r.Context(), req.Email)
+		user, err := q.GetUserByEmail(r.Context(), req.Email)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid credentials", err)
 			return
