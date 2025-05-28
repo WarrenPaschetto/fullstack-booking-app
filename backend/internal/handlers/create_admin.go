@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -11,7 +12,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateAdminHandler(q db.UserQuerier) http.HandlerFunc {
+type adminCreator interface {
+	CreateUser(ctx context.Context, arg db.CreateUserParams) error
+	GetUserByEmail(ctx context.Context, email string) (db.User, error)
+}
+
+func CreateAdminHandler(a adminCreator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		type response struct {
@@ -47,7 +53,7 @@ func CreateAdminHandler(q db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		err = q.CreateUser(r.Context(), db.CreateUserParams{
+		err = a.CreateUser(r.Context(), db.CreateUserParams{
 			FirstName:    req.FirstName,
 			LastName:     req.LastName,
 			Email:        req.Email,
@@ -63,7 +69,7 @@ func CreateAdminHandler(q db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		admin, err := q.GetUserByEmail(r.Context(), req.Email)
+		admin, err := a.GetUserByEmail(r.Context(), req.Email)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to fetch new admin", err)
 			return

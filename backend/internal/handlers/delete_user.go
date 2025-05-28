@@ -1,21 +1,24 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
 
-	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
 	"github.com/google/uuid"
 )
 
+type userDeleter interface {
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+}
 type DeleteRequest struct {
 	UserId uuid.UUID `json:"user_id"`
 }
 
-func DeleteUserHandler(queries db.UserQuerier) http.HandlerFunc {
+func DeleteUserHandler(q userDeleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		req := DeleteRequest{}
@@ -29,7 +32,7 @@ func DeleteUserHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		err = queries.DeleteUser(r.Context(), req.UserId)
+		err = q.DeleteUser(r.Context(), req.UserId)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				utils.RespondWithError(w, http.StatusNotFound, "User not found", nil)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -9,6 +10,10 @@ import (
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
 	"github.com/google/uuid"
 )
+
+type userLister interface {
+	ListUsers(ctx context.Context) ([]db.User, error)
+}
 
 type UserResponse struct {
 	ID        uuid.UUID `json:"id"`
@@ -20,7 +25,7 @@ type UserResponse struct {
 	Role      string    `json:"role"`
 }
 
-func ListAllUsersHandler(queries db.UserQuerier) http.HandlerFunc {
+func ListAllUsersHandler(u userLister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if !middleware.IsAdminFromContext(r.Context()) {
@@ -28,7 +33,7 @@ func ListAllUsersHandler(queries db.UserQuerier) http.HandlerFunc {
 			return
 		}
 
-		users, err := queries.ListUsers(r.Context())
+		users, err := u.ListUsers(r.Context())
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to list users", err)
 			return
