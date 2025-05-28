@@ -52,6 +52,27 @@ func (q *Queries) DeleteAvailabilityPattern(ctx context.Context, arg DeleteAvail
 	return err
 }
 
+const getAvailabilityPatternByID = `-- name: GetAvailabilityPatternByID :one
+SELECT id, provider_id, day_of_week, start_time, end_time, created_at, updated_at
+FROM availability_pattern
+WHERE id = ?
+`
+
+func (q *Queries) GetAvailabilityPatternByID(ctx context.Context, id uuid.UUID) (AvailabilityPattern, error) {
+	row := q.db.QueryRowContext(ctx, getAvailabilityPatternByID, id)
+	var i AvailabilityPattern
+	err := row.Scan(
+		&i.ID,
+		&i.ProviderID,
+		&i.DayOfWeek,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listPatternsByProvider = `-- name: ListPatternsByProvider :many
 SELECT
   id,
