@@ -6,11 +6,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/handlers"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/service"
-	"github.com/go-chi/chi"
-	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -30,41 +30,42 @@ func main() {
 	// Create sqlc Queries object
 	queries := db.New(database)
 
-	// Instantiate the service layer
+	// instantiate your business-logic services around queries
 	bookingSvc := service.NewBookingService(queries)
+	//adminSvc := service.NewAdminService(queries)
+	//availabilitySvc := service.NewAvailabilityService(queries)
 
-	// Instantiate HTTP handlers with the service
+	// now build your handlers.Handler
 	h := handlers.NewHandler(bookingSvc)
+	// —or if you don’t have NewHandler, just:
+	// h := &handlers.Handler{
+	//   BookingService:     bookingSvc,
+	//   AdminService:       adminSvc,
+	//   AvailabilityService: availabilitySvc,
+	// }
 
-	// Build the router
-	r := chi.NewRouter()
+	mux := http.NewServeMux()
 
-	// Global middleware
+	// public auth routes
+	mux.HandleFunc("/api/register", handlers.RegisterHandler(queries))
+	mux.HandleFunc("/api/login", handlers.LoginHandler(queries))
+	mux.HandleFunc("api/bookings/create", h.CreateBookingHandler())
 
-	// 7. Define your routes
-	r.Post("/bookings", h.CreateBookingHandler())
-	r.Delete("/bookings/{id}", h.DeleteBookingHandler())
-	r.Put("/bookings/{id}/reschedule", h.RescheduleBookingHandler())
+	// protected booking route
+	//mux.Handle(
+	//	"/api/bookings/create",
+	//	middleware.AuthMiddleware(queries)(
+	//		h.CreateBookingHandler(),
+	//	),
+	//)
 
-	// 8. Determine port
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	// …and so on for availability, admin, etc.
 
-	addr := ":" + port
-	// ⚙️ Create a custom server with timeouts
 	srv := &http.Server{
-		Addr:         addr,
-		Handler:      r,
+		Addr:         ":" + os.Getenv("PORT"),
+		Handler:      mux,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
 	}
-
-	// 9. Start server
-	log.Printf("Starting server on %s\n", addr)
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
-	}
+	log.Fatal(srv.ListenAndServe())
 }
