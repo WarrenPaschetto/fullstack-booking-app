@@ -45,6 +45,23 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 		UpdatedAt: now,
 	}
 
+	invalidStart := db.ListPatternsByProviderRow{
+		ID:        uuid.New(),
+		DayOfWeek: day,
+		StartTime: nil,
+		EndTime:   end,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	invalidEnd := db.ListPatternsByProviderRow{
+		ID:        uuid.New(),
+		DayOfWeek: day,
+		StartTime: start,
+		EndTime:   nil,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
 	tests := []struct {
 		name              string
 		injectUser        bool
@@ -109,6 +126,26 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 			mockErr:           errors.New("boom"),
 			wantStatus:        http.StatusInternalServerError,
 			wantContains:      "Unable to retrieve availability patterns",
+		},
+		{
+			name:              "Malformed start time",
+			injectUser:        true,
+			noProviderID:      false,
+			invalidProviderID: false,
+			mockSlots:         []db.ListPatternsByProviderRow{invalidStart},
+			mockErr:           nil,
+			wantStatus:        http.StatusInternalServerError,
+			wantContains:      "Malformed start_time in DB row",
+		},
+		{
+			name:              "Malformed end time",
+			injectUser:        true,
+			noProviderID:      false,
+			invalidProviderID: false,
+			mockSlots:         []db.ListPatternsByProviderRow{invalidEnd},
+			mockErr:           nil,
+			wantStatus:        http.StatusInternalServerError,
+			wantContains:      "Malformed end_time in DB row",
 		},
 	}
 
