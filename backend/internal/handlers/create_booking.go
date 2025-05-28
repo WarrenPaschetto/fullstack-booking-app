@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type bookingRequest struct {
+type BookingRequest struct {
 	AppointmentStart time.Time `json:"appointment_start"`
 	DurationMinutes  int       `json:"duration_minutes"`
 }
@@ -25,7 +25,7 @@ func (h *Handler) CreateBookingHandler() http.HandlerFunc {
 		}
 
 		decoder := json.NewDecoder(r.Body)
-		req := bookingRequest{}
+		req := BookingRequest{}
 		err := decoder.Decode(&req)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
