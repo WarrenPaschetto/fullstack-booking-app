@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -15,17 +14,21 @@ import (
 )
 
 func main() {
-	// load .env, connect to DB…
-	godotenv.Load()
-	dsn := os.Getenv("DATABASE_URL")
-	sqlDB, err := sql.Open("postgres", dsn)
+	// load .env
+	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Warning: .env file not found or could not be loaded")
 	}
-	defer sqlDB.Close()
 
-	// your sqlc queries
-	queries := db.New(sqlDB)
+	// connect to Turso DB
+	database, err := db.ConnectDB()
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+	defer database.Close()
+
+	// Create sqlc Queries object
+	queries := db.New(database)
 
 	// instantiate your business-logic services around queries
 	bookingSvc := service.NewBookingService(queries)
