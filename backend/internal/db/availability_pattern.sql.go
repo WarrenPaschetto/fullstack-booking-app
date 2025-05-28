@@ -39,10 +39,16 @@ func (q *Queries) CreateAvailabilityPattern(ctx context.Context, arg CreateAvail
 const deleteAvailabilityPattern = `-- name: DeleteAvailabilityPattern :exec
 DELETE FROM availability_pattern
 WHERE id = ?
+AND provider_id = ?
 `
 
-func (q *Queries) DeleteAvailabilityPattern(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteAvailabilityPattern, id)
+type DeleteAvailabilityPatternParams struct {
+	ID         uuid.UUID
+	ProviderID uuid.UUID
+}
+
+func (q *Queries) DeleteAvailabilityPattern(ctx context.Context, arg DeleteAvailabilityPatternParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAvailabilityPattern, arg.ID, arg.ProviderID)
 	return err
 }
 

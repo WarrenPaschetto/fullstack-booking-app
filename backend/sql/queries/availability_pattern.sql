@@ -13,7 +13,8 @@ WHERE id = ?;
 
 -- name: DeleteAvailabilityPattern :exec
 DELETE FROM availability_pattern
-WHERE id = ?;
+WHERE id = ?
+AND provider_id = ?;
 
 -- name: ListPatternsByProvider :many
 SELECT
