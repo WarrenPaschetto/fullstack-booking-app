@@ -10,26 +10,133 @@
 A fullstack scheduling and booking application built with:
 
 - **Go** for the backend API
-- **Turso (SQLite-based)** for the database
+- **Supabase (PostgreSQL-powered )** for the database
 - **Next.js + Tailwind CSS** for the frontend
 - **Monorepo** structure (frontend and backend together)
 - **CI/CD** with GitHub Actions
+- **Codecov** for coverage reports of testing
 
 ---
 
-## 🧠 Project Goals
+## 🛠️ Prerequisites
 
-Build a fully functional, real-world booking platform with features like:
+A fullstack scheduling and booking application built with:
 
-- User registration and login
-- View available time slots
-- Book, cancel, and reschedule appointments
-- Admin dashboard to manage availability
-- JWT-based authentication
-- CI/CD pipeline for automated build, test, and deploy
+- Go 1.18+ (https://golang.org/dl)
+- PostgreSQL (for the psql CLI)
+- Goose CLI (https://github.com/pressly/goose)
+- A Supabase account (https://supabase.com)
+
 
 ---
 
+## ⚙️ Setup Supabase
+
+1. Log in to Supabase and create a new project.
+2. In the dashboard, go to Settings → Database → Connection string.
+3. Copy the Connection string (libpq) URL, for example:
+```
+postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
+```
+---
+
+## 🌐 Environment Variables
+
+In the backend/ directory, create a file named .env with:
+
+```
+DATABASE_URL=postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
+PORT=8080
+JWT_SECRET=<your_jwt_secret_here>  # optional, for JWT auth
+```
+
+---
+
+## 🪿 Install Goose
+
+Install the Goose CLI for managing migrations:
+
+```
+# via Go modules
+go install github.com/pressly/goose/v3/cmd/goose@latest
+
+# or on macOS using Homebrew
+brew install goose
+```
+Verify installation:
+```
+goose --version
+```
+
+---
+
+## 🗄️ Database Migrations
+
+1. Go into the backend directory:
+   ```
+   cd backend
+   ```
+   
+2. In your shell, export your DATABASE_URL:
+   ```
+   export DATABASE_URL=postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
+   ```
+   
+3. Apply migrations:
+   ```
+   goose -dir sql/schema postgres "$DATABASE_URL" up
+   ```
+
+4. Verify the created tables:
+   ```
+   psql "&DATABASE_URL" -c '/dt'
+   ```
+
+---
+
+## 🏃‍♂️ Run the Application
+
+1. Fetch dependencies and run the server:
+   ```
+   go mod tidy
+   go run ./cmd/main.go
+   ```
+
+2. You should see:
+   ```
+   ✅ Connected to Supabase Postgres
+   Listening on :8080
+   ```
+
+---
+
+## 🧪 Testing Endpoints
+
+Open a new terminal and use curl to exercise your handlers:
+- **Register a new user**
+  ```
+  curl -i -X POST http://localhost:8080/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"first_name":"John","last_name":"Doe","email":"john@example.com","password":"s3cret"}'
+  ```
+
+- **Log in to get a JWT**
+  ```
+  curl -i -X POST http://localhost:8080/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","password":"s3cret"}'
+  ```
+
+- **Create a booking**
+  ```
+  TOKEN=<your_jwt_token>
+  curl -i -X POST http://localhost:8080/api/bookings/create \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"appointment_start":"2025-06-01T09:00:00Z","duration_minutes":60}'
+  ```
+  
+---
 ## 📁 Project Structure
 
 ```
@@ -58,64 +165,6 @@ fullstack-booking-app/
 
 ---
 
-## 🛠️ Setup Steps
-
-### 🔁 General
-
-- [x] Create project folder: `fullstack-booking-app/`
-- [x] Create `.gitignore` in root
-- [x] Create GitHub repo and push initial commit
-
----
-
-### 🧱 Backend (Go + Turso)
-
-- [x] Create `backend/` folder
-- [x] `cd backend && go mod init github.com/YOUR_USERNAME/fullstack-booking-app/backend`
-- [x] Add Turso database and schema.sql
-- [x] Create folder structure:
-  - `/cmd/main.go`
-  - `/internal/auth`
-  - `/internal/db`
-  - `/internal/handlers`
-  - `/internal/models`
-- [ ] Add JWT authentication
-- [ ] Add booking logic and conflict detection
-- [ ] Add admin-only routes
-
----
-
-### 💅 Frontend (Next.js + Tailwind CSS)
-
-- [x] Create `frontend/` folder
-- [x] `cd frontend && npx create-next-app . --ts`
-- [x] `npm install -D tailwindcss postcss autoprefixer`
-- [x] `npx tailwindcss init -p`
-- [ ] Configure `tailwind.config.js` and `globals.css`
-- [ ] Build signup/login UI
-- [ ] Build booking dashboard
-- [ ] Add admin panel UI
-
----
-
-### ⚙️ CI/CD
-
-- [x] Add GitHub Actions workflow for backend (`backend.yml`)
-- [x] Add GitHub Actions workflow for frontend (`frontend.yml`)
-- [ ] Deploy backend (Railway, Fly.io, etc.)
-- [ ] Deploy frontend (Vercel)
-
----
-
-## 🚀 Future Enhancements
-
-- Email or SMS reminders
-- Google Calendar sync
-- Recurring bookings
-- Multi-provider support
-- Analytics dashboard for admins
-
----
 
 ## 📜 License
 
