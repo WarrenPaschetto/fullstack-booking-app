@@ -54,7 +54,7 @@ func CreateAvailabilityPatternHandler(q AvailabilityPatternCreator) http.Handler
 		arg := db.CreateAvailabilityPatternParams{
 			ID:         uuid.New(),
 			ProviderID: providerID,
-			DayOfWeek:  int64(req.DayOfWeek),
+			DayOfWeek:  int32(req.DayOfWeek),
 			StartTime:  req.StartTime,
 			EndTime:    req.EndTime,
 		}

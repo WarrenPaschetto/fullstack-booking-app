@@ -18,7 +18,7 @@ type providerPatternsLister interface {
 
 type PatternsResponse struct {
 	ID        uuid.UUID `json:"id"`
-	DayOfWeek int64     `json:"day_of_week"`
+	DayOfWeek int32     `json:"day_of_week"`
 	StartTime time.Time `json:"start_time"`
 	EndTime   time.Time `json:"end_time"`
 	CreatedAt time.Time `json:"created_at"`
@@ -53,14 +53,16 @@ func ListPatternsByProviderHandler(q providerPatternsLister) http.HandlerFunc {
 
 		resp := make([]PatternsResponse, len(patterns))
 		for i, p := range patterns {
-			st, ok := p.StartTime.(time.Time)
-			if !ok {
+			st := p.StartTime
+			et := p.EndTime
+
+			if st.IsZero() {
 				utils.RespondWithError(w, http.StatusInternalServerError,
 					"Malformed start_time in DB row", nil)
 				return
 			}
-			et, ok := p.EndTime.(time.Time)
-			if !ok {
+
+			if et.IsZero() {
 				utils.RespondWithError(w, http.StatusInternalServerError,
 					"Malformed end_time in DB row", nil)
 				return

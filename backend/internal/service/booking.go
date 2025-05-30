@@ -45,7 +45,7 @@ func (s *BookingService) CreateBooking(
 	appointment, err := s.queries.CreateBooking(ctx, db.CreateBookingParams{
 		ID:               id,
 		AppointmentStart: start,
-		DurationMinutes:  int64(durationMinutes),
+		DurationMinutes:  int32(durationMinutes),
 		UserID:           userID,
 	})
 	if err != nil {

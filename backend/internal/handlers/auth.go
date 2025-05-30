@@ -83,6 +83,7 @@ func RegisterHandler(q userQuerier) http.HandlerFunc {
 		}
 
 		err = q.CreateUser(r.Context(), db.CreateUserParams{
+			ID:           uuid.New(),
 			FirstName:    req.FirstName,
 			LastName:     req.LastName,
 			Email:        req.Email,

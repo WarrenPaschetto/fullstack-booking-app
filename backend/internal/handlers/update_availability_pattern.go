@@ -19,13 +19,13 @@ type patternUpdater interface {
 }
 
 type UpdateRequest struct {
-	DayOfWeek int64     `json:"day_of_week"`
+	DayOfWeek int32     `json:"day_of_week"`
 	StartTime time.Time `json:"start_time"`
 	EndTime   time.Time `json:"end_time"`
 }
 
 type UpdateResponse struct {
-	DayOfWeek int64     `json:"day_of_week"`
+	DayOfWeek int32     `json:"day_of_week"`
 	StartTime time.Time `json:"start_time"`
 	EndTime   time.Time `json:"end_time"`
 	ID        uuid.UUID `json:"id"`

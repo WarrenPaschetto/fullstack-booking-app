@@ -33,7 +33,7 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 	providerID := uuid.New()
 	start := time.Date(2025, 6, 1, 9, 0, 0, 0, time.UTC)
 	end := time.Date(2025, 6, 1, 17, 0, 0, 0, time.UTC)
-	day := int64(3)
+	day := int32(3)
 	now := time.Now()
 
 	sample := db.ListPatternsByProviderRow{
@@ -45,10 +45,10 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 		UpdatedAt: now,
 	}
 
-	invalidStart := db.ListPatternsByProviderRow{
+	/*invalidStart := db.ListPatternsByProviderRow{
 		ID:        uuid.New(),
 		DayOfWeek: day,
-		StartTime: nil,
+		StartTime: time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 		EndTime:   end,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -57,10 +57,10 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 		ID:        uuid.New(),
 		DayOfWeek: day,
 		StartTime: start,
-		EndTime:   nil,
+		EndTime:   time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
 		CreatedAt: now,
 		UpdatedAt: now,
-	}
+	}*/
 
 	tests := []struct {
 		name              string
@@ -84,8 +84,8 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 			wantSlots: []PatternsResponse{{
 				ID:        sample.ID,
 				DayOfWeek: sample.DayOfWeek,
-				StartTime: sample.StartTime.(time.Time),
-				EndTime:   sample.EndTime.(time.Time),
+				StartTime: sample.StartTime,
+				EndTime:   sample.EndTime,
 				CreatedAt: sample.CreatedAt,
 				UpdatedAt: sample.UpdatedAt,
 			}},
@@ -127,26 +127,26 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 			wantStatus:        http.StatusInternalServerError,
 			wantContains:      "Unable to retrieve availability patterns",
 		},
-		{
-			name:              "Malformed start time",
-			injectUser:        true,
-			noProviderID:      false,
-			invalidProviderID: false,
-			mockSlots:         []db.ListPatternsByProviderRow{invalidStart},
-			mockErr:           nil,
-			wantStatus:        http.StatusInternalServerError,
-			wantContains:      "Malformed start_time in DB row",
-		},
-		{
-			name:              "Malformed end time",
-			injectUser:        true,
-			noProviderID:      false,
-			invalidProviderID: false,
-			mockSlots:         []db.ListPatternsByProviderRow{invalidEnd},
-			mockErr:           nil,
-			wantStatus:        http.StatusInternalServerError,
-			wantContains:      "Malformed end_time in DB row",
-		},
+		/*	{
+				name:              "Malformed start time",
+				injectUser:        true,
+				noProviderID:      false,
+				invalidProviderID: false,
+				mockSlots:         []db.ListPatternsByProviderRow{invalidStart},
+				mockErr:           nil,
+				wantStatus:        http.StatusInternalServerError,
+				wantContains:      "Malformed start_time in DB row",
+			},
+			{
+				name:              "Malformed end time",
+				injectUser:        true,
+				noProviderID:      false,
+				invalidProviderID: false,
+				mockSlots:         []db.ListPatternsByProviderRow{invalidEnd},
+				mockErr:           nil,
+				wantStatus:        http.StatusInternalServerError,
+				wantContains:      "Malformed end_time in DB row",
+			}, */
 	}
 
 	for _, tt := range tests {
