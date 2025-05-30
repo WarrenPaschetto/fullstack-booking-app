@@ -1,8 +1,7 @@
 -- +goose Up
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS availability (
-  id            UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+  id            UUID PRIMARY KEY NOT NULL,
   provider_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   start_time    TIMESTAMP NOT NULL,
   end_time      TIMESTAMP NOT NULL,

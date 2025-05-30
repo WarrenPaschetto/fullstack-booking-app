@@ -1,8 +1,7 @@
 -- +goose Up
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE bookings (
-    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     appointment_start TIMESTAMP NOT NULL,

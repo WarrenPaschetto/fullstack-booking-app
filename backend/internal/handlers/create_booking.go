@@ -17,8 +17,7 @@ type BookingRequest struct {
 
 func (h *Handler) CreateBookingHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		raw := r.Context().Value(middleware.UserIDKey)
-		userID, ok := raw.(uuid.UUID)
+		userID, ok := middleware.UserIDFromContext(r.Context())
 		if !ok {
 			utils.RespondWithError(w, http.StatusUnauthorized, "User ID missing or not a UUID in context", nil)
 			return
