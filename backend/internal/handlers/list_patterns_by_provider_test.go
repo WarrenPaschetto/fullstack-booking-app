@@ -33,7 +33,7 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 	providerID := uuid.New()
 	start := time.Date(2025, 6, 1, 9, 0, 0, 0, time.UTC)
 	end := time.Date(2025, 6, 1, 17, 0, 0, 0, time.UTC)
-	day := int64(3)
+	day := int32(3)
 	now := time.Now()
 
 	sample := db.ListPatternsByProviderRow{
@@ -48,7 +48,7 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 	invalidStart := db.ListPatternsByProviderRow{
 		ID:        uuid.New(),
 		DayOfWeek: day,
-		StartTime: nil,
+		StartTime: time.Time{},
 		EndTime:   end,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -57,7 +57,7 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 		ID:        uuid.New(),
 		DayOfWeek: day,
 		StartTime: start,
-		EndTime:   nil,
+		EndTime:   time.Time{},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -84,8 +84,8 @@ func TestListPatternsByProviderHandler(t *testing.T) {
 			wantSlots: []PatternsResponse{{
 				ID:        sample.ID,
 				DayOfWeek: sample.DayOfWeek,
-				StartTime: sample.StartTime.(time.Time),
-				EndTime:   sample.EndTime.(time.Time),
+				StartTime: sample.StartTime,
+				EndTime:   sample.EndTime,
 				CreatedAt: sample.CreatedAt,
 				UpdatedAt: sample.UpdatedAt,
 			}},

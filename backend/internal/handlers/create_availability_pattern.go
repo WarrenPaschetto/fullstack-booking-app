@@ -25,7 +25,7 @@ func CreateAvailabilityPatternHandler(q AvailabilityPatternCreator) http.Handler
 		}
 
 		var req struct {
-			DayOfWeek int       `json:"day_of_week"`
+			DayOfWeek int32     `json:"day_of_week"`
 			StartTime time.Time `json:"start_time"`
 			EndTime   time.Time `json:"end_time"`
 		}
@@ -54,7 +54,7 @@ func CreateAvailabilityPatternHandler(q AvailabilityPatternCreator) http.Handler
 		arg := db.CreateAvailabilityPatternParams{
 			ID:         uuid.New(),
 			ProviderID: providerID,
-			DayOfWeek:  int64(req.DayOfWeek),
+			DayOfWeek:  req.DayOfWeek,
 			StartTime:  req.StartTime,
 			EndTime:    req.EndTime,
 		}
@@ -66,7 +66,7 @@ func CreateAvailabilityPatternHandler(q AvailabilityPatternCreator) http.Handler
 
 		resp := struct {
 			ID        uuid.UUID `json:"id"`
-			DayOfWeek int       `json:"day_of_week"`
+			DayOfWeek int32     `json:"day_of_week"`
 			StartTime time.Time `json:"start_time"`
 			EndTime   time.Time `json:"end_time"`
 		}{

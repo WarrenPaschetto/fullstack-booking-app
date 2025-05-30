@@ -211,7 +211,7 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 				return db.Booking{
 					ID:               arg.ID,
 					AppointmentStart: arg.AppointmentStart,
-					DurationMinutes:  int64(30),
+					DurationMinutes:  int32(30),
 				}, nil
 			},
 			wantBooking: db.Booking{
@@ -302,7 +302,7 @@ func TestBookingService_GetBookingByID(t *testing.T) {
 					ID:               id,
 					UserID:           userID,
 					AppointmentStart: now,
-					DurationMinutes:  int64(45),
+					DurationMinutes:  int32(45),
 				}, nil
 			},
 			wantBooking: db.Booking{ID: bookingID, UserID: userID, AppointmentStart: now, DurationMinutes: 45},
@@ -329,7 +329,7 @@ func TestBookingService_GetBookingByID(t *testing.T) {
 					ID:               id,
 					UserID:           wrongUser,
 					AppointmentStart: now,
-					DurationMinutes:  int64(45),
+					DurationMinutes:  int32(45),
 				}, nil
 			},
 			wantErr: ErrNotAuthorized,

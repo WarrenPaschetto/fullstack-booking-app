@@ -28,7 +28,7 @@ func (s *BookingService) CreateBooking(
 	id uuid.UUID,
 	userID uuid.UUID,
 	start time.Time,
-	durationMinutes int,
+	durationMinutes int32,
 ) (db.Booking, error) {
 
 	overlaps, err := s.queries.GetOverlappingBookings(ctx, db.GetOverlappingBookingsParams{
@@ -45,7 +45,7 @@ func (s *BookingService) CreateBooking(
 	appointment, err := s.queries.CreateBooking(ctx, db.CreateBookingParams{
 		ID:               id,
 		AppointmentStart: start,
-		DurationMinutes:  int64(durationMinutes),
+		DurationMinutes:  int32(durationMinutes),
 		UserID:           userID,
 	})
 	if err != nil {

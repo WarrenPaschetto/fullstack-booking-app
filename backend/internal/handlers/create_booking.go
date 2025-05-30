@@ -12,7 +12,7 @@ import (
 
 type BookingRequest struct {
 	AppointmentStart time.Time `json:"appointment_start"`
-	DurationMinutes  int       `json:"duration_minutes"`
+	DurationMinutes  int32     `json:"duration_minutes"`
 }
 
 func (h *Handler) CreateBookingHandler() http.HandlerFunc {

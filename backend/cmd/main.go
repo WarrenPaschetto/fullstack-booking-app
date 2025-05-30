@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -14,52 +15,24 @@ import (
 )
 
 func main() {
-	// load .env
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Warning: .env file not found or could not be loaded")
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found")
 	}
 
-	// connect to Turso DB
-	database, err := db.ConnectDB()
+	dbConn, err := db.ConnectDB(context.Background())
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
-	defer database.Close()
+	defer dbConn.Close()
 
-	// Create sqlc Queries object
-	queries := db.New(database)
-
-	// instantiate your business-logic services around queries
+	queries := db.New(dbConn)
 	bookingSvc := service.NewBookingService(queries)
-	//adminSvc := service.NewAdminService(queries)
-	//availabilitySvc := service.NewAvailabilityService(queries)
-
-	// now build your handlers.Handler
 	h := handlers.NewHandler(bookingSvc)
-	// —or if you don’t have NewHandler, just:
-	// h := &handlers.Handler{
-	//   BookingService:     bookingSvc,
-	//   AdminService:       adminSvc,
-	//   AvailabilityService: availabilitySvc,
-	// }
 
 	mux := http.NewServeMux()
-
-	// public auth routes
 	mux.HandleFunc("/api/register", handlers.RegisterHandler(queries))
 	mux.HandleFunc("/api/login", handlers.LoginHandler(queries))
-	mux.HandleFunc("api/bookings/create", h.CreateBookingHandler())
-
-	// protected booking route
-	//mux.Handle(
-	//	"/api/bookings/create",
-	//	middleware.AuthMiddleware(queries)(
-	//		h.CreateBookingHandler(),
-	//	),
-	//)
-
-	// …and so on for availability, admin, etc.
+	mux.HandleFunc("/api/bookings/create", h.CreateBookingHandler())
 
 	srv := &http.Server{
 		Addr:         ":" + os.Getenv("PORT"),

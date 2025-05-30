@@ -1,27 +1,33 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
-	_ "github.com/tursodatabase/libsql-client-go/libsql"
+	_ "github.com/jackc/pgx/v4/stdlib" // register the pgx driver with database/sql
 )
 
-func ConnectDB() (*sql.DB, error) {
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		return nil, fmt.Errorf("DATABASE_URL not set")
+// ConnectDB opens a *sql.DB using the pgx driver
+func ConnectDB(ctx context.Context) (*sql.DB, error) {
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
+		return nil, fmt.Errorf("DATABASE_URL is not set")
 	}
 
-	db, err := sql.Open("libsql", dbURL)
+	db, err := sql.Open("pgx", url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Turso database: %w", err)
+		return nil, fmt.Errorf("sql.Open: %w", err)
 	}
 
-	// test the connection
-	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("the Turso database not reachable: %w", err)
+	// optional tuning:
+	db.SetMaxOpenConns(10)
+	db.SetConnMaxIdleTime(5 * time.Minute)
+
+	if err := db.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("db.Ping: %w", err)
 	}
 
 	return db, nil
