@@ -32,8 +32,8 @@ func (s *BookingService) CreateBooking(
 ) (db.Booking, error) {
 
 	overlaps, err := s.queries.GetOverlappingBookings(ctx, db.GetOverlappingBookingsParams{
-		NewStart: start,
-		NewEnd:   start.Add(time.Duration(durationMinutes) * time.Minute),
+		AppointmentStart:   start,
+		AppointmentStart_2: start.Add(time.Duration(durationMinutes) * time.Minute),
 	})
 	if err != nil {
 		return db.Booking{}, err
@@ -79,8 +79,8 @@ func (s *BookingService) RescheduleBooking(
 ) (db.Booking, error) {
 
 	overlaps, err := s.queries.GetOverlappingBookings(ctx, db.GetOverlappingBookingsParams{
-		NewStart: newStart,
-		NewEnd:   newStart.Add(time.Duration(durationMinutes) * time.Minute),
+		AppointmentStart:   newStart,
+		AppointmentStart_2: newStart.Add(time.Duration(durationMinutes) * time.Minute),
 	})
 	if err != nil {
 		return db.Booking{}, err

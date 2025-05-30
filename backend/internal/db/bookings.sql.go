@@ -96,12 +96,12 @@ WHERE
 `
 
 type GetOverlappingBookingsParams struct {
-	NewStart time.Time
-	NewEnd   time.Time
+	AppointmentStart   time.Time
+	AppointmentStart_2 time.Time
 }
 
 func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlappingBookingsParams) ([]Booking, error) {
-	rows, err := q.db.QueryContext(ctx, getOverlappingBookings, arg.NewStart, arg.NewEnd)
+	rows, err := q.db.QueryContext(ctx, getOverlappingBookings, arg.AppointmentStart, arg.AppointmentStart_2)
 	if err != nil {
 		return nil, err
 	}

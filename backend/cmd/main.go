@@ -11,6 +11,7 @@ import (
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/handlers"
+	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/service"
 )
 
@@ -32,7 +33,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/register", handlers.RegisterHandler(queries))
 	mux.HandleFunc("/api/login", handlers.LoginHandler(queries))
-	mux.HandleFunc("/api/bookings/create", h.CreateBookingHandler())
+	mux.Handle("/api/bookings/create", middleware.AuthMiddleware(h.CreateBookingHandler()))
 
 	srv := &http.Server{
 		Addr:         ":" + os.Getenv("PORT"),
