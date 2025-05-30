@@ -96,8 +96,8 @@ WHERE
 `
 
 type GetOverlappingBookingsParams struct {
-	NewStart   time.Time
-	NewEnd time.Time
+	NewStart time.Time
+	NewEnd   time.Time
 }
 
 func (q *Queries) GetOverlappingBookings(ctx context.Context, arg GetOverlappingBookingsParams) ([]Booking, error) {
