@@ -108,7 +108,7 @@ func TestRescheduleBookingHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.RescheduleBookingHandler()
 
-			req := httptest.NewRequest(http.MethodPatch, "/bookings/"+tt.routeID, bytes.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPatch, "/api/bookings/"+tt.routeID, bytes.NewReader(tt.body))
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("id", tt.routeID)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
