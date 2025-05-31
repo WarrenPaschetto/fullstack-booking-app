@@ -154,7 +154,7 @@ Open a new terminal and use curl to exercise your handlers:
 
 - **Get booking by its id**
   ```
-  curl -i -X GET http://localhost:8080/api/bookings/{booking_id} \
+  curl -i -X GET http://localhost:8080/api/bookings/{id of booking} \
   -H "Authorization: Bearer $TOKEN" 
   ```
   
