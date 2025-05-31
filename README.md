@@ -18,6 +18,10 @@ A fullstack scheduling and booking application built with:
 
 ---
 
+
+# The Backend
+
+
 ## 🛠️ Prerequisites
 
 A fullstack scheduling and booking application built with:
@@ -28,7 +32,7 @@ A fullstack scheduling and booking application built with:
 - A Supabase account (https://supabase.com)
 
 
----
+
 
 ## ⚙️ Setup Supabase
 
@@ -38,7 +42,7 @@ A fullstack scheduling and booking application built with:
 ```
 postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
 ```
----
+
 
 ## 🌐 Environment Variables
 
@@ -50,7 +54,7 @@ PORT=8080
 JWT_SECRET=<your_jwt_secret_here>  # optional, for JWT auth
 ```
 
----
+
 
 ## 🪿 Install Goose
 
@@ -68,7 +72,7 @@ Verify installation:
 goose --version
 ```
 
----
+
 
 ## 🗄️ Database Migrations
 
@@ -92,7 +96,7 @@ goose --version
    psql "&DATABASE_URL" -c '/dt'
    ```
 
----
+
 
 ## 🏃‍♂️ Run the Application
 
@@ -108,7 +112,7 @@ goose --version
    Listening on :8080
    ```
 
----
+
 
 ## 🧪 Testing Endpoints
 
@@ -148,7 +152,7 @@ Open a new terminal and use curl to exercise your handlers:
   -H "Authorization: Bearer $TOKEN" 
   ```
   
----
+
 ## 📁 Project Structure
 
 ```
