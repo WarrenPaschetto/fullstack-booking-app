@@ -94,6 +94,14 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			expectedContains: "Missing booking ID",
 		},
 		{
+			name:             "Booking id is nil",
+			routeID:          uuid.Nil.String(),
+			ctxUserID:        userID,
+			mockGet:          nil,
+			expectStatus:     http.StatusBadRequest,
+			expectedContains: "Booking ID is required",
+		},
+		{
 			name:             "Bad id param",
 			routeID:          "not-a-uuid",
 			ctxUserID:        userID,
