@@ -101,7 +101,7 @@ func TestListBookingsForUserHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.ListBookingsForUserHandler()
 
-			req := httptest.NewRequest(http.MethodGet, "/bookings", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/bookings", nil)
 			if tt.ctxUserID != nil {
 				req = req.WithContext(
 					context.WithValue(req.Context(), middleware.UserIDKey, tt.ctxUserID),

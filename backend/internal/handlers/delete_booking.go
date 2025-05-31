@@ -1,41 +1,51 @@
 package handlers
 
 import (
-	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
+	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/service"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
-
-type DeleteBookingRequest struct {
-	ID uuid.UUID `json:"id"`
-}
 
 func (h *Handler) DeleteBookingHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		raw := r.Context().Value(middleware.UserIDKey)
-		userID, ok := raw.(uuid.UUID)
+
+		userID, ok := middleware.UserIDFromContext(r.Context())
 		if !ok {
 			utils.RespondWithError(w, http.StatusUnauthorized, "User ID missing or not a UUID in context", nil)
 			return
 		}
 
-		decoder := json.NewDecoder(r.Body)
-		req := DeleteBookingRequest{}
-		err := decoder.Decode(&req)
-		if err != nil {
-			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
+		vars := mux.Vars(r)
+		slotIDStr, ok := vars["id"]
+		if !ok {
+			utils.RespondWithError(w, http.StatusBadRequest, "Missing slot ID", nil)
 			return
 		}
-
-		if req.ID == uuid.Nil {
+		slotID, err := uuid.Parse(slotIDStr)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusBadRequest, "Invalid slot ID", err)
+			return
+		}
+		if slotID == uuid.Nil {
 			utils.RespondWithError(w, http.StatusBadRequest, "Booking ID is required", nil)
 			return
 		}
 
-		if err = h.BookingService.DeleteBooking(r.Context(), req.ID, userID); err != nil {
+		err = h.BookingService.DeleteBooking(r.Context(), slotID, userID)
+		if errors.Is(err, service.ErrBookingNotFound) {
+			utils.RespondWithError(w, http.StatusNotFound, "Booking not found", nil)
+			return
+		}
+		if errors.Is(err, service.ErrNotAuthorized) {
+			utils.RespondWithError(w, http.StatusForbidden, "Not allowed to delete this booking", nil)
+			return
+		}
+		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to delete booking", err)
 			return
 		}

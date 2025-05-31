@@ -78,7 +78,7 @@ func TestCreateBookingHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.CreateBookingHandler()
 
-			req := httptest.NewRequest(http.MethodPost, "/bookings", bytes.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, "/api//bookings", bytes.NewReader(tt.body))
 			if tt.ctxUserID != nil {
 				req = req.WithContext(context.WithValue(req.Context(), middleware.UserIDKey, tt.ctxUserID))
 			}

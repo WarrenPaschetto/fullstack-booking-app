@@ -107,7 +107,7 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.GetBookingByIDHandler()
 
-			req := httptest.NewRequest(http.MethodGet, "/bookings/"+tt.routeID, nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/bookings/"+tt.routeID, nil)
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("id", tt.routeID)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
