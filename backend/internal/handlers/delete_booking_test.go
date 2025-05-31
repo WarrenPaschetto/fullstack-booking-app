@@ -70,6 +70,14 @@ func TestDeleteBookingHandler(t *testing.T) {
 			expectedContains: "Missing slot ID",
 		},
 		{
+			name:             "Booking ID is nil",
+			ctxUserID:        userID,
+			routeID:          uuid.Nil.String(),
+			mockDelete:       nil,
+			expectStatus:     http.StatusBadRequest,
+			expectedContains: "Booking ID is required",
+		},
+		{
 			name:             "Invalid booking ID",
 			ctxUserID:        userID,
 			routeID:          "4595",
