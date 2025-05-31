@@ -151,6 +151,12 @@ Open a new terminal and use curl to exercise your handlers:
   curl -i -X GET http://localhost:8080/api/bookings \
   -H "Authorization: Bearer $TOKEN" 
   ```
+
+- **Get booking by its id**
+  ```
+  curl -i -X GET http://localhost:8080/api/bookings/{booking_id} \
+  -H "Authorization: Bearer $TOKEN" 
+  ```
   
 
 ## 📁 Project Structure
