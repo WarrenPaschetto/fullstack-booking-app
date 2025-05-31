@@ -135,6 +135,13 @@ Open a new terminal and use curl to exercise your handlers:
   -H "Authorization: Bearer $TOKEN" \
   -d '{"appointment_start":"2025-06-01T09:00:00Z","duration_minutes":60}'
   ```
+
+- **Delete a booking**
+  ```
+  TOKEN=<your_jwt_token>
+  curl -i -X DELETE http://localhost:8080/api/bookings/{id of booking} \
+  -H "Authorization: Bearer $TOKEN" 
+  ```
   
 ---
 ## 📁 Project Structure
