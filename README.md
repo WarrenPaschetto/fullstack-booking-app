@@ -138,8 +138,13 @@ Open a new terminal and use curl to exercise your handlers:
 
 - **Delete a booking**
   ```
-  TOKEN=<your_jwt_token>
   curl -i -X DELETE http://localhost:8080/api/bookings/{id of booking} \
+  -H "Authorization: Bearer $TOKEN" 
+  ```
+
+- **List bookings for user**
+  ```
+  curl -i -X GET http://localhost:8080/api/bookings \
   -H "Authorization: Bearer $TOKEN" 
   ```
   
