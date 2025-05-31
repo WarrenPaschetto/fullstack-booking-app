@@ -7,14 +7,15 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/service"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 func TestGetBookingByIDHandler(t *testing.T) {
@@ -32,12 +33,13 @@ func TestGetBookingByIDHandler(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		routeID        string
-		ctxUserID      interface{}
-		mockGet        func(ctx context.Context, id uuid.UUID) (db.Booking, error)
-		expectStatus   int
-		expectResponse *db.Booking
+		name             string
+		routeID          string
+		ctxUserID        interface{}
+		mockGet          func(ctx context.Context, id uuid.UUID) (db.Booking, error)
+		expectStatus     int
+		expectResponse   *db.Booking
+		expectedContains string
 	}{
 		{
 
@@ -60,7 +62,8 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			mockGet: func(ctx context.Context, id uuid.UUID) (db.Booking, error) {
 				return db.Booking{}, sql.ErrNoRows
 			},
-			expectStatus: http.StatusNotFound,
+			expectStatus:     http.StatusNotFound,
+			expectedContains: "Booking not found",
 		},
 		{
 			name:      "Forbidden",
@@ -69,7 +72,8 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			mockGet: func(ctx context.Context, id uuid.UUID) (db.Booking, error) {
 				return fakeBooking, nil
 			},
-			expectStatus: http.StatusForbidden,
+			expectStatus:     http.StatusForbidden,
+			expectedContains: "Not allowed",
 		},
 		{
 			name:      "DB error",
@@ -78,21 +82,40 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			mockGet: func(ctx context.Context, id uuid.UUID) (db.Booking, error) {
 				return db.Booking{}, errors.New("some db failure")
 			},
-			expectStatus: http.StatusInternalServerError,
+			expectStatus:     http.StatusInternalServerError,
+			expectedContains: "Error fetching booking",
 		},
 		{
-			name:         "Bad id param",
-			routeID:      "not-a-uuid",
-			ctxUserID:    userID,
-			mockGet:      nil,
-			expectStatus: http.StatusBadRequest,
+			name:             "Missing booking id",
+			routeID:          "",
+			ctxUserID:        userID,
+			mockGet:          nil,
+			expectStatus:     http.StatusBadRequest,
+			expectedContains: "Missing booking ID",
 		},
 		{
-			name:         "No auth",
-			routeID:      bookingID.String(),
-			ctxUserID:    nil,
-			mockGet:      nil,
-			expectStatus: http.StatusUnauthorized,
+			name:             "Booking id is nil",
+			routeID:          uuid.Nil.String(),
+			ctxUserID:        userID,
+			mockGet:          nil,
+			expectStatus:     http.StatusBadRequest,
+			expectedContains: "Booking ID is required",
+		},
+		{
+			name:             "Bad id param",
+			routeID:          "not-a-uuid",
+			ctxUserID:        userID,
+			mockGet:          nil,
+			expectStatus:     http.StatusBadRequest,
+			expectedContains: "Invalid booking ID",
+		},
+		{
+			name:             "No auth",
+			routeID:          bookingID.String(),
+			ctxUserID:        nil,
+			mockGet:          nil,
+			expectStatus:     http.StatusUnauthorized,
+			expectedContains: "User ID missing or not a UUID in context",
 		},
 	}
 
@@ -107,15 +130,21 @@ func TestGetBookingByIDHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.GetBookingByIDHandler()
 
-			req := httptest.NewRequest(http.MethodGet, "/api/bookings/"+tt.routeID, nil)
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", tt.routeID)
-			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+			urlPath := "/api/bookings"
+			if tt.routeID != "" {
+				urlPath += "/" + tt.routeID
+			}
+
+			req := httptest.NewRequest(http.MethodGet, urlPath, nil)
 
 			if tt.ctxUserID != nil {
 				req = req.WithContext(
 					context.WithValue(req.Context(), middleware.UserIDKey, tt.ctxUserID),
 				)
+			}
+
+			if tt.routeID != "" {
+				req = mux.SetURLVars(req, map[string]string{"id": tt.routeID})
 			}
 
 			rr := httptest.NewRecorder()
@@ -133,6 +162,9 @@ func TestGetBookingByIDHandler(t *testing.T) {
 				if got.ID != fakeBooking.ID || got.UserID != fakeBooking.UserID {
 					t.Errorf("unexpected booking returned: %+v", got)
 				}
+			}
+			if tt.expectedContains != "" && !strings.Contains(rr.Body.String(), tt.expectedContains) {
+				t.Errorf("expected response to contain %q, got %s", tt.expectedContains, rr.Body.String())
 			}
 		})
 	}
