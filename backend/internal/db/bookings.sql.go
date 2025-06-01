@@ -206,18 +206,21 @@ func (q *Queries) ListBookingsForUser(ctx context.Context, userID uuid.UUID) ([]
 
 const rescheduleBooking = `-- name: RescheduleBooking :one
 UPDATE bookings
-SET appointment_start = $1
-WHERE id = $2
+SET appointment_start = $2,
+    duration_minutes = $3,
+    updated_at = now()
+WHERE id = $1
 RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id
 `
 
 type RescheduleBookingParams struct {
-	AppointmentStart time.Time
 	ID               uuid.UUID
+	AppointmentStart time.Time
+	DurationMinutes  int32
 }
 
 func (q *Queries) RescheduleBooking(ctx context.Context, arg RescheduleBookingParams) (Booking, error) {
-	row := q.db.QueryRowContext(ctx, rescheduleBooking, arg.AppointmentStart, arg.ID)
+	row := q.db.QueryRowContext(ctx, rescheduleBooking, arg.ID, arg.AppointmentStart, arg.DurationMinutes)
 	var i Booking
 	err := row.Scan(
 		&i.ID,
