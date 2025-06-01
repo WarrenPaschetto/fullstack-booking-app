@@ -16,8 +16,10 @@ WHERE id = $1 AND user_id = $2;
 
 -- name: RescheduleBooking :one
 UPDATE bookings
-SET appointment_start = $1
-WHERE id = $2
+SET appointment_start = $2,
+    duration_minutes = $3,
+    updated_at = now()
+WHERE id = $1
 RETURNING *;
 
 -- name: ListBookingsForUser :many
