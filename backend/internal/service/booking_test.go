@@ -51,7 +51,7 @@ func (f *fakeBookingRepo) CreateAvailability(ctx context.Context, arg db.CreateA
 }
 
 var errSimulatedOverlap = errors.New("simulated error")
-var errSimulatedreate = errors.New("could not create booking")
+var errSimulatedCreate = errors.New("could not create booking")
 var errDeleting = errors.New("could not delete booking")
 var errReschedule = errors.New("could not reschedule booking")
 
@@ -92,8 +92,8 @@ func TestBookingService_CreateBooking(t *testing.T) {
 		{
 			name:      "Create booking error",
 			overlaps:  nil,
-			createErr: errSimulatedreate,
-			wantErr:   errSimulatedreate,
+			createErr: errSimulatedCreate,
+			wantErr:   errSimulatedCreate,
 		},
 	}
 
@@ -250,6 +250,7 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			userID := uuid.New()
 			repo := &fakeBookingRepo{
 				RescheduleBookingFn: tt.mockReschedule,
 				overlaps:            tt.overlaps,
@@ -257,7 +258,7 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 			}
 
 			svc := NewBookingService(repo)
-			got, err := svc.RescheduleBooking(context.Background(), bookingID, newStart, 30)
+			got, err := svc.RescheduleBooking(context.Background(), bookingID, userID, newStart, 30)
 
 			if tt.wantErr != nil {
 				if err == nil {

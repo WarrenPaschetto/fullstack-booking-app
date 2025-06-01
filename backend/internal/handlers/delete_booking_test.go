@@ -125,11 +125,7 @@ func TestDeleteBookingHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.DeleteBookingHandler()
 
-			urlPath := "/api/bookings"
-			if tt.routeID != "" {
-				urlPath += "/" + tt.routeID
-			}
-			req := httptest.NewRequest(http.MethodDelete, urlPath, nil)
+			req := httptest.NewRequest(http.MethodDelete, "/api/bookings/"+tt.routeID, nil)
 
 			if tt.ctxUserID != nil {
 				req = req.WithContext(
