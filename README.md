@@ -166,31 +166,7 @@ Open a new terminal and use curl to exercise your handlers:
   -d '{"appointment_start":"2025-06-01T08:00:00Z","duration_minutes":30}'
   ```
 
-## 📁 Project Structure
 
-```
-fullstack-booking-app/
-├── backend/ # Go backend with Turso (SQLite)
-│ ├── cmd/
-│ ├── internal/
-│ ├── go.mod
-│ └── schema.sql
-│
-├── frontend/ # Next.js + Tailwind frontend
-│ ├── pages/
-│ ├── components/
-│ ├── styles/
-│ ├── tailwind.config.js
-│ └── next.config.js
-│
-├── .github/workflows/ # GitHub Actions CI/CD
-│ ├── backend.yml
-│ └── frontend.yml
-│
-├── .gitignore
-├── README.md
-└── docker-compose.yml # (optional)
-```
 
 ---
 
