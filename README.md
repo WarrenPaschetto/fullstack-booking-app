@@ -157,7 +157,14 @@ Open a new terminal and use curl to exercise your handlers:
   curl -i -X GET http://localhost:8080/api/bookings/{id of booking} \
   -H "Authorization: Bearer $TOKEN" 
   ```
-  
+
+- **Reschedule a booking**
+  ```
+  curl -i -X PUT http://localhost:8080/api/bookings/{id of booking} \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"appointment_start":"2025-06-01T08:00:00Z","duration_minutes":30}'
+  ```
 
 ## 📁 Project Structure
 
