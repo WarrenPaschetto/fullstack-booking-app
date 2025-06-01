@@ -74,6 +74,7 @@ func (s *BookingService) DeleteBooking(
 func (s *BookingService) RescheduleBooking(
 	ctx context.Context,
 	bookingID uuid.UUID,
+	userID uuid.UUID,
 	newStart time.Time,
 	durationMinutes int,
 ) (db.Booking, error) {
