@@ -59,12 +59,17 @@ func (s *BookingService) DeleteBooking(
 	ctx context.Context,
 	id uuid.UUID,
 	userID uuid.UUID,
+	isAdmin bool,
 ) error {
 	err := s.queries.DeleteBooking(ctx, db.DeleteBookingParams{
-		ID:     id,
-		UserID: userID,
+		ID:      id,
+		UserID:  userID,
+		Column3: isAdmin,
 	})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrBookingNotFound
+		}
 		return err
 	}
 

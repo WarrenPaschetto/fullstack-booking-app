@@ -54,16 +54,18 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 
 const deleteBooking = `-- name: DeleteBooking :exec
 DELETE FROM bookings 
-WHERE id = $1 AND user_id = $2
+WHERE id = $1 
+AND (user_id = $2 or $3::boolean)
 `
 
 type DeleteBookingParams struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
+	ID      uuid.UUID
+	UserID  uuid.UUID
+	Column3 bool
 }
 
 func (q *Queries) DeleteBooking(ctx context.Context, arg DeleteBookingParams) error {
-	_, err := q.db.ExecContext(ctx, deleteBooking, arg.ID, arg.UserID)
+	_, err := q.db.ExecContext(ctx, deleteBooking, arg.ID, arg.UserID, arg.Column3)
 	return err
 }
 
