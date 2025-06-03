@@ -22,7 +22,7 @@ type UserResponse struct {
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	Role      string    `json:"role"`
+	UserRole  string    `json:"user_role"`
 }
 
 func ListAllUsersHandler(u userLister) http.HandlerFunc {
@@ -48,7 +48,7 @@ func ListAllUsersHandler(u userLister) http.HandlerFunc {
 				Email:     u.Email,
 				CreatedAt: u.CreatedAt,
 				UpdatedAt: u.UpdatedAt,
-				Role:      u.Role,
+				UserRole:  u.UserRole,
 			})
 		}
 

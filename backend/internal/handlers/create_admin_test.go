@@ -43,7 +43,7 @@ func (m *mockAdminRegisterQueries) GetUserByEmail(_ context.Context, email strin
 		PasswordHash: "hashed-password",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
-		Role:         "admin",
+		UserRole:     "admin",
 	}, nil
 }
 
@@ -52,7 +52,7 @@ type AdminRequest struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
-	Role      string `json:"role"`
+	UserRole  string `json:"user_role"`
 }
 
 var repeatEmail = "usedEmail@email.com"
@@ -74,7 +74,7 @@ func TestCreateAdminHandler(t *testing.T) {
 				LastName:  "Doe",
 				Email:     "user@example.com",
 				Password:  "strongpassword",
-				Role:      "admin",
+				UserRole:  "admin",
 			},
 			mockQuery:      &mockAdminRegisterQueries{},
 			expectedCode:   http.StatusCreated,
@@ -88,7 +88,7 @@ func TestCreateAdminHandler(t *testing.T) {
 				LastName:  "Doe",
 				Email:     "user@example.com",
 				Password:  "strongpassword",
-				Role:      "admin",
+				UserRole:  "admin",
 			},
 			mockQuery:        &mockAdminRegisterQueries{},
 			expectedCode:     http.StatusForbidden,
