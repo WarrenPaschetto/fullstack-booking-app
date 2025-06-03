@@ -134,28 +134,56 @@ func TestBookingService_CreateBooking(t *testing.T) {
 func TestBookingService_DeleteBooking(t *testing.T) {
 	userID := uuid.New()
 	bookingID := uuid.New()
+	adminID := uuid.New()
 
 	tests := []struct {
 		name       string
 		mockDelete func(ctx context.Context, arg db.DeleteBookingParams) error
+		ctxUserID  uuid.UUID
+		isAdmin    bool
 		wantErr    error
 	}{
 		{
-			name: "Successful deletion",
+			name: "Successful user deletion",
 			mockDelete: func(_ context.Context, arg db.DeleteBookingParams) error {
 				if arg.ID != bookingID || arg.UserID != userID {
 					t.Errorf("expected ID=%v and UserID=%v, got ID=%v and UserID=%v", bookingID, userID, arg.ID, arg.UserID)
 				}
 				return nil
 			},
-			wantErr: nil,
+			ctxUserID: userID,
+			isAdmin:   false,
+			wantErr:   nil,
+		},
+		{
+			name: "Successful admin deletion",
+			mockDelete: func(_ context.Context, arg db.DeleteBookingParams) error {
+				if arg.ID != bookingID || arg.UserID != adminID {
+					t.Errorf("expected ID=%v and UserID=%v, got ID=%v and UserID=%v", bookingID, userID, arg.ID, arg.UserID)
+				}
+				return nil
+			},
+			ctxUserID: adminID,
+			isAdmin:   true,
+			wantErr:   nil,
+		},
+		{
+			name: "Booking not found",
+			mockDelete: func(_ context.Context, arg db.DeleteBookingParams) error {
+				return sql.ErrNoRows
+			},
+			ctxUserID: userID,
+			isAdmin:   false,
+			wantErr:   ErrBookingNotFound,
 		},
 		{
 			name: "Unsuccessful deletion",
 			mockDelete: func(_ context.Context, arg db.DeleteBookingParams) error {
 				return errDeleting
 			},
-			wantErr: errDeleting,
+			ctxUserID: userID,
+			isAdmin:   false,
+			wantErr:   errDeleting,
 		},
 	}
 
@@ -166,7 +194,7 @@ func TestBookingService_DeleteBooking(t *testing.T) {
 			}
 
 			svc := NewBookingService(repo)
-			err := svc.DeleteBooking(context.Background(), bookingID, userID)
+			err := svc.DeleteBooking(context.Background(), bookingID, tt.ctxUserID, tt.isAdmin)
 
 			if tt.wantErr != nil {
 				if err == nil {

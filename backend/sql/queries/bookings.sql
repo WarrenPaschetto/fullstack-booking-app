@@ -12,7 +12,8 @@ RETURNING *;
 
 -- name: DeleteBooking :exec
 DELETE FROM bookings 
-WHERE id = $1 AND user_id = $2;
+WHERE id = $1 
+AND (user_id = $2 or $3::boolean);
 
 -- name: RescheduleBooking :one
 UPDATE bookings
