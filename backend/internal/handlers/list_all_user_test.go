@@ -81,7 +81,7 @@ func TestListAllUsersHandler_Mapping(t *testing.T) {
 			Email:     "alice@example.com",
 			CreatedAt: t0,
 			UpdatedAt: t0,
-			Role:      "user",
+			UserRole:  "user",
 		},
 		{
 			ID:        uuid.MustParse("22222222-2222-2222-2222-222222222222"),
@@ -90,7 +90,7 @@ func TestListAllUsersHandler_Mapping(t *testing.T) {
 			Email:     "bob@example.com",
 			CreatedAt: t0,
 			UpdatedAt: t0,
-			Role:      "admin",
+			UserRole:  "admin",
 		},
 	}
 
@@ -118,8 +118,8 @@ func TestListAllUsersHandler_Mapping(t *testing.T) {
 	}
 
 	want := []UserResponse{
-		{ID: users[0].ID, FirstName: "Alice", LastName: "Anderson", Email: "alice@example.com", CreatedAt: t0, UpdatedAt: t0, Role: "user"},
-		{ID: users[1].ID, FirstName: "Bob", LastName: "Brown", Email: "bob@example.com", CreatedAt: t0, UpdatedAt: t0, Role: "admin"},
+		{ID: users[0].ID, FirstName: "Alice", LastName: "Anderson", Email: "alice@example.com", CreatedAt: t0, UpdatedAt: t0, UserRole: "user"},
+		{ID: users[1].ID, FirstName: "Bob", LastName: "Brown", Email: "bob@example.com", CreatedAt: t0, UpdatedAt: t0, UserRole: "admin"},
 	}
 
 	if !reflect.DeepEqual(got, want) {

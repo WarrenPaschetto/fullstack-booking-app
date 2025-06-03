@@ -12,7 +12,7 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, first_name, last_name, created_at, updated_at, email, password_hash, role)
+INSERT INTO users (id, first_name, last_name, created_at, updated_at, email, password_hash, user_role)
 VALUES ( 
     $1,
     $2,
@@ -31,7 +31,7 @@ type CreateUserParams struct {
 	LastName     string
 	Email        string
 	PasswordHash string
-	Role         string
+	UserRole     string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -41,7 +41,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.LastName,
 		arg.Email,
 		arg.PasswordHash,
-		arg.Role,
+		arg.UserRole,
 	)
 	return err
 }
@@ -56,7 +56,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, created_at, updated_at, email, password_hash, role FROM users
+SELECT id, first_name, last_name, created_at, updated_at, email, password_hash, user_role FROM users
 WHERE email = $1
 `
 
@@ -71,13 +71,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.UpdatedAt,
 		&i.Email,
 		&i.PasswordHash,
-		&i.Role,
+		&i.UserRole,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, first_name, last_name, created_at, updated_at, email, password_hash, role FROM users ORDER BY last_name ASC, first_name ASC
+SELECT id, first_name, last_name, created_at, updated_at, email, password_hash, user_role FROM users ORDER BY last_name ASC, first_name ASC
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -97,7 +97,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.UpdatedAt,
 			&i.Email,
 			&i.PasswordHash,
-			&i.Role,
+			&i.UserRole,
 		); err != nil {
 			return nil, err
 		}

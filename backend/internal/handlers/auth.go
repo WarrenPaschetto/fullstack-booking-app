@@ -25,6 +25,7 @@ type RegisterRequest struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
+	UserRole  string `json:"user_role"`
 }
 
 type RegisterResponse struct {
@@ -34,7 +35,7 @@ type RegisterResponse struct {
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	Role      string    `json:"role"`
+	UserRole  string    `json:"user_role"`
 }
 
 type LoginRequest struct {
@@ -75,6 +76,9 @@ func RegisterHandler(q userQuerier) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusBadRequest, "Email and password required", nil)
 			return
 		}
+		if req.UserRole == "" {
+			req.UserRole = "user"
+		}
 
 		hashedPassword, err := HashPasswordFn([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
@@ -88,7 +92,7 @@ func RegisterHandler(q userQuerier) http.HandlerFunc {
 			LastName:     req.LastName,
 			Email:        req.Email,
 			PasswordHash: string(hashedPassword),
-			Role:         "user",
+			UserRole:     req.UserRole,
 		})
 		if err != nil {
 			if strings.Contains(err.Error(), "UNIQUE constraint failed: users.email") {
@@ -113,6 +117,7 @@ func RegisterHandler(q userQuerier) http.HandlerFunc {
 				Email:     user.Email,
 				CreatedAt: user.CreatedAt,
 				UpdatedAt: user.UpdatedAt,
+				UserRole:  user.UserRole,
 			},
 		})
 	}
@@ -153,7 +158,7 @@ func LoginHandler(q userQuerier) http.HandlerFunc {
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"sub":  user.ID,
-			"role": user.Role,
+			"role": user.UserRole,
 			"iat":  jwt.NewNumericDate(time.Now()),
 			"exp":  jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})

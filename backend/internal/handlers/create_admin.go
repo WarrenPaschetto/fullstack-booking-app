@@ -58,7 +58,7 @@ func CreateAdminHandler(a adminCreator) http.HandlerFunc {
 			LastName:     req.LastName,
 			Email:        req.Email,
 			PasswordHash: string(hashedPassword),
-			Role:         "admin",
+			UserRole:     "admin",
 		})
 		if err != nil {
 			if strings.Contains(err.Error(), "UNIQUE constraint failed: users.email") {
@@ -83,6 +83,7 @@ func CreateAdminHandler(a adminCreator) http.HandlerFunc {
 				Email:     admin.Email,
 				CreatedAt: admin.CreatedAt,
 				UpdatedAt: admin.UpdatedAt,
+				UserRole:  admin.UserRole,
 			},
 		})
 	}

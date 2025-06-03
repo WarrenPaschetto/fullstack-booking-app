@@ -8,7 +8,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user'
+    user_role TEXT NOT NULL DEFAULT 'user'
 );
 
 -- +goose Down
