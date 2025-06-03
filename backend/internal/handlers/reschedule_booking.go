@@ -25,6 +25,7 @@ func (h *Handler) RescheduleBookingHandler() http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusUnauthorized, "User ID missing or not a UUID in context", nil)
 			return
 		}
+		isAdmin := middleware.IsAdminFromContext(r.Context())
 
 		vars := mux.Vars(r)
 		bookingIDStr, ok := vars["id"]
@@ -59,6 +60,7 @@ func (h *Handler) RescheduleBookingHandler() http.HandlerFunc {
 			userID,
 			req.AppointmentStart,
 			req.DurationMinutes,
+			isAdmin,
 		)
 		if errors.Is(err, service.ErrBookingConflict) {
 			utils.RespondWithError(w, http.StatusConflict, "Time slot already booked", nil)

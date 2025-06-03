@@ -216,10 +216,14 @@ func TestBookingService_DeleteBooking(t *testing.T) {
 func TestBookingService_RescheduleBooking(t *testing.T) {
 	now := time.Date(2025, 5, 14, 10, 0, 0, 0, time.UTC)
 	bookingID := uuid.New()
+	userID := uuid.New()
+	adminID := uuid.New()
 	newStart := now.Add(2 * time.Hour)
 
 	tests := []struct {
 		name           string
+		ctxUser        uuid.UUID
+		ctxAdmin       bool
 		mockReschedule func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
 		overlaps       []db.Booking
 		overlapErr     error
@@ -227,8 +231,10 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 		wantErr        error
 	}{
 		{
-			name: "Successful reschedule",
-			mockReschedule: func(_ context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
+			name:     "Successful reschedule",
+			ctxUser:  userID,
+			ctxAdmin: false,
+			mockReschedule: func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
 				if arg.ID != bookingID {
 					t.Errorf("expected bookingID=%v, got bookingID=%v", bookingID, arg.ID)
 				}
@@ -250,14 +256,46 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "Unsuccessful deletion",
+			name:     "Successful admin reschedule of another user",
+			ctxUser:  adminID,
+			ctxAdmin: true,
+			mockReschedule: func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
+				if arg.ID != bookingID {
+					t.Errorf("expected bookingID=%v, got bookingID=%v", bookingID, arg.ID)
+				}
+				if arg.UserID != adminID {
+					t.Errorf("expected adminID=%v, got %v", adminID, arg.UserID)
+				}
+				if !arg.AppointmentStart.Equal(newStart) {
+					t.Errorf("expected new start=%v, got %v", newStart, arg.AppointmentStart)
+				}
+
+				return db.Booking{
+					ID:               arg.ID,
+					AppointmentStart: arg.AppointmentStart,
+					DurationMinutes:  int32(30),
+				}, nil
+			},
+			wantBooking: db.Booking{
+				ID:               bookingID,
+				AppointmentStart: newStart,
+				DurationMinutes:  30,
+			},
+			wantErr: nil,
+		},
+		{
+			name:     "Unsuccessful deletion",
+			ctxUser:  userID,
+			ctxAdmin: false,
 			mockReschedule: func(_ context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
 				return db.Booking{}, errReschedule
 			},
 			wantErr: errReschedule,
 		},
 		{
-			name: "DB error fetching overlaps",
+			name:     "DB error fetching overlaps",
+			ctxUser:  userID,
+			ctxAdmin: false,
 			mockReschedule: func(_ context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
 				t.Fatalf("reschedule could not be called on overlap error")
 				return db.Booking{}, nil
@@ -266,7 +304,9 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 			wantErr:    errSimulatedOverlap,
 		},
 		{
-			name: "Overlap booking",
+			name:     "Overlap booking",
+			ctxUser:  userID,
+			ctxAdmin: false,
 			mockReschedule: func(_ context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
 				t.Fatalf("reschedule could not be called due to conflict of scheduling")
 				return db.Booking{}, nil
@@ -278,7 +318,7 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			userID := uuid.New()
+
 			repo := &fakeBookingRepo{
 				RescheduleBookingFn: tt.mockReschedule,
 				overlaps:            tt.overlaps,
@@ -286,7 +326,7 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 			}
 
 			svc := NewBookingService(repo)
-			got, err := svc.RescheduleBooking(context.Background(), bookingID, userID, newStart, 30)
+			got, err := svc.RescheduleBooking(context.Background(), bookingID, tt.ctxUser, newStart, 30, tt.ctxAdmin)
 
 			if tt.wantErr != nil {
 				if err == nil {

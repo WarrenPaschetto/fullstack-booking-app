@@ -21,6 +21,7 @@ SET appointment_start = $2,
     duration_minutes = $3,
     updated_at = now()
 WHERE id = $1
+AND (user_id = $4 or $5::boolean)
 RETURNING *;
 
 -- name: ListBookingsForUser :many

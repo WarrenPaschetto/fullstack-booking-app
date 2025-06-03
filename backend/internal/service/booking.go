@@ -82,6 +82,7 @@ func (s *BookingService) RescheduleBooking(
 	userID uuid.UUID,
 	newStart time.Time,
 	durationMinutes int32,
+	isAdmin bool,
 ) (db.Booking, error) {
 
 	overlaps, err := s.queries.GetOverlappingBookings(ctx, db.GetOverlappingBookingsParams{
@@ -99,6 +100,8 @@ func (s *BookingService) RescheduleBooking(
 		ID:               bookingID,
 		AppointmentStart: newStart,
 		DurationMinutes:  durationMinutes,
+		UserID:           userID,
+		Column5:          isAdmin,
 	})
 	if err != nil {
 		return db.Booking{}, err

@@ -212,6 +212,7 @@ SET appointment_start = $2,
     duration_minutes = $3,
     updated_at = now()
 WHERE id = $1
+AND (user_id = $4 or $5::boolean)
 RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id
 `
 
@@ -219,10 +220,18 @@ type RescheduleBookingParams struct {
 	ID               uuid.UUID
 	AppointmentStart time.Time
 	DurationMinutes  int32
+	UserID           uuid.UUID
+	Column5          bool
 }
 
 func (q *Queries) RescheduleBooking(ctx context.Context, arg RescheduleBookingParams) (Booking, error) {
-	row := q.db.QueryRowContext(ctx, rescheduleBooking, arg.ID, arg.AppointmentStart, arg.DurationMinutes)
+	row := q.db.QueryRowContext(ctx, rescheduleBooking,
+		arg.ID,
+		arg.AppointmentStart,
+		arg.DurationMinutes,
+		arg.UserID,
+		arg.Column5,
+	)
 	var i Booking
 	err := row.Scan(
 		&i.ID,
