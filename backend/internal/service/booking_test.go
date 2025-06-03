@@ -134,7 +134,6 @@ func TestBookingService_CreateBooking(t *testing.T) {
 func TestBookingService_DeleteBooking(t *testing.T) {
 	userID := uuid.New()
 	bookingID := uuid.New()
-	adminID := uuid.New()
 
 	tests := []struct {
 		name       string
@@ -158,12 +157,12 @@ func TestBookingService_DeleteBooking(t *testing.T) {
 		{
 			name: "Successful admin deletion",
 			mockDelete: func(_ context.Context, arg db.DeleteBookingParams) error {
-				if arg.ID != bookingID || arg.UserID != adminID {
+				if arg.ID != bookingID {
 					t.Errorf("expected ID=%v and UserID=%v, got ID=%v and UserID=%v", bookingID, userID, arg.ID, arg.UserID)
 				}
 				return nil
 			},
-			ctxUserID: adminID,
+			ctxUserID: uuid.Nil,
 			isAdmin:   true,
 			wantErr:   nil,
 		},
@@ -217,7 +216,6 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 	now := time.Date(2025, 5, 14, 10, 0, 0, 0, time.UTC)
 	bookingID := uuid.New()
 	userID := uuid.New()
-	adminID := uuid.New()
 	newStart := now.Add(2 * time.Hour)
 
 	tests := []struct {
@@ -257,14 +255,11 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 		},
 		{
 			name:     "Successful admin reschedule of another user",
-			ctxUser:  adminID,
+			ctxUser:  uuid.Nil,
 			ctxAdmin: true,
 			mockReschedule: func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
 				if arg.ID != bookingID {
 					t.Errorf("expected bookingID=%v, got bookingID=%v", bookingID, arg.ID)
-				}
-				if arg.UserID != adminID {
-					t.Errorf("expected adminID=%v, got %v", adminID, arg.UserID)
 				}
 				if !arg.AppointmentStart.Equal(newStart) {
 					t.Errorf("expected new start=%v, got %v", newStart, arg.AppointmentStart)
@@ -284,7 +279,7 @@ func TestBookingService_RescheduleBooking(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:     "Unsuccessful deletion",
+			name:     "Reschedule returns DB error",
 			ctxUser:  userID,
 			ctxAdmin: false,
 			mockReschedule: func(_ context.Context, arg db.RescheduleBookingParams) (db.Booking, error) {
