@@ -168,6 +168,15 @@ func TestBookingService_DeleteBooking(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
+			name: "Booking not found",
+			mockDelete: func(_ context.Context, arg db.DeleteBookingParams) error {
+				return sql.ErrNoRows
+			},
+			ctxUserID: userID,
+			isAdmin:   false,
+			wantErr:   ErrBookingNotFound,
+		},
+		{
 			name: "Unsuccessful deletion",
 			mockDelete: func(_ context.Context, arg db.DeleteBookingParams) error {
 				return errDeleting
