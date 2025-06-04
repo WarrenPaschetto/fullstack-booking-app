@@ -1,9 +1,25 @@
 import { FormEvent, useState } from "react";
 
 type AuthMode = "login" | "register";
+
 interface AuthFormProps {
     mode: AuthMode;
     onSuccess: (token: string) => void;
+}
+
+// Helper: given an unknown value, return `message` if that property is a string.
+function extractMessage(body: unknown): string | undefined {
+    if (
+        body !== null &&
+        typeof body === "object" &&
+        // “in” check ensures a “message” key exists
+        "message" in (body as Record<string, unknown>) &&
+        typeof (body as Record<string, unknown>).message === "string"
+    ) {
+        // Now it’s safe to cast to Record<string, string> for that property
+        return (body as Record<string, string>).message;
+    }
+    return undefined;
 }
 
 export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
@@ -30,25 +46,21 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                         body: JSON.stringify(payload),
                     }
                 );
+
                 if (!resp.ok) {
-                    // Handle JSON error body without using `any`:
+                    // Parse response as unknown, then safely extract “message” if present.
                     const unknownBody: unknown = await resp.json().catch(() => ({} as unknown));
                     let errMsg = `Register failed: ${resp.status}`;
-                    if (
-                        typeof unknownBody === "object" &&
-                        unknownBody !== null &&
-                        "message" in unknownBody &&
-                        typeof (unknownBody as any).message === "string"
-                    ) {
-                        errMsg = (unknownBody as { message: string }).message;
-                    }
+                    const parsed = extractMessage(unknownBody);
+                    if (parsed) errMsg = parsed;
                     throw new Error(errMsg);
                 }
-                // On successful register, some backends immediately return a JWT.
+
+                // On success, backend should return { token: "<JWT>" }
                 const data = await resp.json();
                 onSuccess(data.token);
             } else {
-                // login
+                // login mode
                 const payload = { email, password };
                 const resp = await fetch(
                     `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/login`,
@@ -58,19 +70,15 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                         body: JSON.stringify(payload),
                     }
                 );
+
                 if (!resp.ok) {
                     const unknownBody: unknown = await resp.json().catch(() => ({} as unknown));
                     let errMsg = `Login failed: ${resp.status}`;
-                    if (
-                        typeof unknownBody === "object" &&
-                        unknownBody !== null &&
-                        "message" in unknownBody &&
-                        typeof (unknownBody as any).message === "string"
-                    ) {
-                        errMsg = (unknownBody as { message: string }).message;
-                    }
+                    const parsed = extractMessage(unknownBody);
+                    if (parsed) errMsg = parsed;
                     throw new Error(errMsg);
                 }
+
                 const data = await resp.json();
                 onSuccess(data.token);
             }
