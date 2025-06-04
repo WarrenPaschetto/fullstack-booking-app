@@ -45,6 +45,8 @@ func main() {
 	bookings.Handle("/{id}", h.RescheduleBookingHandler()).Methods("PUT")
 	bookings.Handle("/{id}", h.DeleteBookingHandler()).Methods("DELETE")
 
+	handlerWithCORS := middleware.CORS(r)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -52,7 +54,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:         ":" + port,
-		Handler:      r,
+		Handler:      handlerWithCORS,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 	}
