@@ -39,7 +39,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
             if (mode === "register") {
                 const payload = { first_name: firstName, last_name: lastName, email, password };
                 const resp = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/register`,
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/register`,
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -63,7 +63,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                 // login mode
                 const payload = { email, password };
                 const resp = await fetch(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/login`,
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/login`,
                     {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
