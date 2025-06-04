@@ -169,7 +169,7 @@ func TestRescheduleBookingHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.RescheduleBookingHandler()
 
-			req := httptest.NewRequest(http.MethodPatch, "/api/bookings/"+tt.routeID, bytes.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPut, "/api/bookings/"+tt.routeID, bytes.NewReader(tt.body))
 
 			if tt.ctxUserID != nil {
 				req = req.WithContext(
@@ -200,13 +200,13 @@ func TestRescheduleBookingHandler(t *testing.T) {
 					t.Errorf("got ID %v, want %v", returned.ID, fakeBooking.ID)
 				}
 				if !returned.AppointmentStart.Equal(fakeBooking.AppointmentStart) {
-					t.Errorf("got ID %v, want %v", returned.AppointmentStart, fakeBooking.AppointmentStart)
+					t.Errorf("got AppointmentStart %v, want %v", returned.AppointmentStart, fakeBooking.AppointmentStart)
 				}
 				if returned.DurationMinutes != fakeBooking.DurationMinutes {
-					t.Errorf("got ID %v, want %v", returned.DurationMinutes, fakeBooking.DurationMinutes)
+					t.Errorf("got DurationMinutes %v, want %v", returned.DurationMinutes, fakeBooking.DurationMinutes)
 				}
 				if returned.UserID != fakeBooking.UserID {
-					t.Errorf("got ID %v, want %v", returned.UserID, fakeBooking.UserID)
+					t.Errorf("got user ID %v, want %v", returned.UserID, fakeBooking.UserID)
 				}
 			}
 		})
