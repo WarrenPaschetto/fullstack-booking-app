@@ -20,7 +20,7 @@ export default function AdminDashboard() {
             const token = localStorage.getItem("booking_app_token");
             if (!token) return;
 
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings/all`, {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (resp.ok) {
