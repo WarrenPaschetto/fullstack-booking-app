@@ -22,35 +22,60 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
         try {
             if (mode === "register") {
                 const payload = { first_name: firstName, last_name: lastName, email, password };
-                const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/register`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+                const resp = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/register`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    }
+                );
                 if (!resp.ok) {
-                    const err = await resp.json().catch(() => ({}));
-                    throw new Error(err.message || `Register failed: ${resp.status}`);
+                    // Handle JSON error body without using `any`:
+                    const unknownBody: unknown = await resp.json().catch(() => ({} as unknown));
+                    let errMsg = `Register failed: ${resp.status}`;
+                    if (
+                        typeof unknownBody === "object" &&
+                        unknownBody !== null &&
+                        "message" in unknownBody &&
+                        typeof (unknownBody as any).message === "string"
+                    ) {
+                        errMsg = (unknownBody as { message: string }).message;
+                    }
+                    throw new Error(errMsg);
                 }
-                // On successful register, some backends immediately return a JWT. 
+                // On successful register, some backends immediately return a JWT.
                 const data = await resp.json();
                 onSuccess(data.token);
             } else {
                 // login
                 const payload = { email, password };
-                const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/login`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+                const resp = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/login`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    }
+                );
                 if (!resp.ok) {
-                    const err = await resp.json().catch(() => ({}));
-                    throw new Error(err.message || `Login failed: ${resp.status}`);
+                    const unknownBody: unknown = await resp.json().catch(() => ({} as unknown));
+                    let errMsg = `Login failed: ${resp.status}`;
+                    if (
+                        typeof unknownBody === "object" &&
+                        unknownBody !== null &&
+                        "message" in unknownBody &&
+                        typeof (unknownBody as any).message === "string"
+                    ) {
+                        errMsg = (unknownBody as { message: string }).message;
+                    }
+                    throw new Error(errMsg);
                 }
                 const data = await resp.json();
                 onSuccess(data.token);
             }
-        } catch (err: any) {
-            setErrorMsg(err.message);
+        } catch (err: unknown) {
+            setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred");
         } finally {
             setLoading(false);
         }

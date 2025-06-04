@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
+import Link from "next/link";
 import Navbar from "../components/Navbar";
 import { isAuthenticated, userRole } from "../utils/auth";
 
@@ -28,18 +29,18 @@ export default function Home() {
                     Please log in or register to continue.
                 </p>
                 <div className="flex justify-center space-x-4">
-                    <a
+                    <Link
                         href="/login"
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
                     >
                         Log In
-                    </a>
-                    <a
+                    </Link>
+                    <Link
                         href="/register"
                         className="border border-blue-600 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50"
                     >
                         Register
-                    </a>
+                    </Link>
                 </div>
             </div>
         </Layout>
