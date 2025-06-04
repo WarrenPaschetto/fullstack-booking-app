@@ -90,68 +90,123 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
-            <h2 className="text-2xl font-semibold mb-6 text-center">
-                {mode === "login" ? "Log In" : "Register"}
-            </h2>
-
-            {mode === "register" && (
-                <>
-                    <label className="block mb-2">
-                        <span className="text-gray-700">First Name</span>
-                        <input
-                            type="text"
-                            required
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300"
-                        />
-                    </label>
-
-                    <label className="block mb-2">
-                        <span className="text-gray-700">Last Name</span>
-                        <input
-                            type="text"
-                            required
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300"
-                        />
-                    </label>
-                </>
-            )}
-
-            <label className="block mb-2">
-                <span className="text-gray-700">Email</span>
-                <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300"
-                />
-            </label>
-
-            <label className="block mb-4">
-                <span className="text-gray-700">Password</span>
-                <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300"
-                />
-            </label>
-
-            {errorMsg && <p className="text-red-500 mb-4 text-sm">{errorMsg}</p>}
-
-            <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+        // Full-screen wrapper that centers the form vertically & horizontally
+        <div className="flex items-center justify-center">
+            {/* The bluish–purple “card” */}
+            <form
+                onSubmit={handleSubmit}
+                className="
+          bg-gradient-to-br from-blue-500 to-purple-600
+          rounded-2xl
+          shadow-2xl
+          p-8
+          w-full max-w-md
+          text-white
+          flex flex-col
+          space-y-6
+        "
             >
-                {loading ? "Processing…" : mode === "login" ? "Log In" : "Register"}
-            </button>
-        </form>
+                {/* Heading */}
+                <h2 className="text-3xl font-bold text-center">
+                    {mode === "login" ? "Log In" : "Register"}
+                </h2>
+
+                {/* If registering, show First & Last Name fields */}
+                {mode === "register" && (
+                    <div className="space-y-4">
+                        <label className="block">
+                            <span className="block mb-1 text-sm font-medium">First Name</span>
+                            <input
+                                type="text"
+                                required
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                className="
+                  w-full
+                  px-3 py-2
+                  rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-300
+                  text-gray-900
+                "
+                            />
+                        </label>
+                        <label className="block">
+                            <span className="block mb-1 text-sm font-medium">Last Name</span>
+                            <input
+                                type="text"
+                                required
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                className="
+                  w-full
+                  px-3 py-2
+                  rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-300
+                  text-gray-900
+                "
+                            />
+                        </label>
+                    </div>
+                )}
+
+                {/* Email field */}
+                <label className="block">
+                    <span className="block mb-1 text-sm font-medium">Email</span>
+                    <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="
+              w-full
+              px-3 py-2
+              rounded-lg
+              focus:outline-none focus:ring-2 focus:ring-blue-300
+              text-gray-900
+            "
+                    />
+                </label>
+
+                {/* Password field */}
+                <label className="block">
+                    <span className="block mb-1 text-sm font-medium">Password</span>
+                    <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="
+              w-full
+              px-3 py-2
+              rounded-lg
+              focus:outline-none focus:ring-2 focus:ring-blue-300
+              text-gray-900
+            "
+                    />
+                </label>
+
+                {/* Error message, if any */}
+                {errorMsg && <p className="text-red-300 text-sm text-center">{errorMsg}</p>}
+
+                {/* Submit button */}
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="
+            w-full
+            text-blue-700
+            bg-blue-200 bg-opacity-20
+            hover:bg-opacity-30
+            py-2 rounded-lg
+            font-semibold
+            transition
+            disabled:opacity-50
+            hover:bg-blue-400
+          "
+                >
+                    {loading ? "Processing…" : mode === "login" ? "Log In" : "Register"}
+                </button>
+            </form>
+        </div>
     );
 }
