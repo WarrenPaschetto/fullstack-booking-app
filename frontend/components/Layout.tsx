@@ -3,17 +3,24 @@ import { ReactNode } from "react";
 export default function Layout({ children }: { children: ReactNode }) {
     return (
         // Full-screen wrapper to center the “card” vertically & horizontally
-        <div className="min-h-screen flex flex-center items-center justify-center bg-gray-100">
-            {/* The bluish–purple “card” container */}
+        <div
+            className="min-h-screen flex items-center justify-center bg-cover bg-center"
+            style={{
+                backgroundImage: `url('/images/blue-abstract.jpg')`,
+            }}>
             <div
                 className="
-          bg-gradient-to-br from-blue-500 to-purple-600
+          border-5
+          border-blue-200
+          bg-gradient-to-br from-blue-900 via-blue-700 to-purple-800
           rounded-2xl
+          shadow-blue-800
           shadow-2xl
-          p-6
-          w-full max-w-md
-          text-white
+          p-2
+          w-[60%]
+          text-black
           flex flex-col
+          items-center
           space-y-6
         "
             >

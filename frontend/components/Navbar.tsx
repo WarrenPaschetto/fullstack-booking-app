@@ -13,8 +13,9 @@ export default function Navbar() {
     }
 
     return (
-        <nav className="w-full bg-blue-300 bg-opacity-30 shadow-md py-3 px-6 flex flex-col justify-between items-center">
-            <Link href="/" className="font-bold text-3xl text-blue-800 py-2">
+        <nav className="w-full bg-blue-200 bg-opacity-30 shadow-md rounded-2xl py-3 px-6 flex flex-col lg:flex-row justify-between items-center">
+            <div className="flex flex-row justify-end w-full"></div>
+            <Link href="/" className="font-bold text-2xl sm:text-4xl text-blue-800 py-2 flex flex-row justify-center w-full">
                 BookingApp
             </Link>
 
@@ -29,11 +30,11 @@ export default function Navbar() {
                     </button>
                 </div>
             ) : (
-                <div className="space-x-8 flex flex-row justify-center w-full">
-                    <Link href="/login" className="text-white hover:text-blue-700">
+                <div className="space-x-8 flex flex-row justify-center lg:justify-end w-full">
+                    <Link href="/login" className="font-bold text-blue-800 hover:text-white">
                         Log In
                     </Link>
-                    <Link href="/register" className="text-white hover:text-blue-700">
+                    <Link href="/register" className="font-bold text-blue-800 hover:text-white">
                         Register
                     </Link>
                 </div>

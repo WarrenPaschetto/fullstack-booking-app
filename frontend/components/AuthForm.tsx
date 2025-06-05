@@ -96,7 +96,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
             <form
                 onSubmit={handleSubmit}
                 className="
-          bg-gradient-to-br from-blue-500 to-purple-600
+          bg-gradient-to-br from-blue-400 to-purple-700
           rounded-2xl
           shadow-2xl
           p-8

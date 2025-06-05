@@ -23,7 +23,7 @@ export default function Home() {
     return (
         <Layout>
             <Navbar />
-            <div className="bg-blue-100 p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+            <div className="flex flex-col justify-center bg-blue-100 border-5 border-blue-200 p-8 rounded-lg shadow-lg max-w-md w-full text-center">
                 <h1 className="text-2xl font-semibold mb-4 text-blue-800">Welcome to BookingApp</h1>
                 <p className="mb-6 text-blue-600">
                     Please log in or register to continue.
