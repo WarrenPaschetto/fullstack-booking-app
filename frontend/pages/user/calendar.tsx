@@ -1,3 +1,4 @@
+"use client"
 import { useState, useEffect, useMemo } from "react";
 import Layout from "../../components/Layout";
 import Navbar from "../../components/Navbar";
@@ -41,7 +42,7 @@ export default function UserCalendar() {
     useEffect(() => {
         if (!selectedDate) return;
         const iso = selectedDate.toISOString().slice(0, 10);
-        fetch(`/api/availability/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z`)
+        fetch(`/api/availabilities/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z`)
             .then((r) => r.json())
             .then((data) => {
                 // assuming your API returns { times: string[] }

@@ -45,7 +45,20 @@ func main() {
 	bookings.Handle("/{id}", h.RescheduleBookingHandler()).Methods("PUT")
 	bookings.Handle("/{id}", h.DeleteBookingHandler()).Methods("DELETE")
 
+	availabilities := r.PathPrefix("/api/availabilities").Subrouter()
+	availabilities.Use(middleware.AuthMiddleware)
+
+	availabilities.Handle("/free", handlers.ListAllFreeSlotsHandler(queries)).Methods("GET")
+
 	handlerWithCORS := middleware.CORS(r)
+
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			next.ServeHTTP(w, r)
+			log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
+		})
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

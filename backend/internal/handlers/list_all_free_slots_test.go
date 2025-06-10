@@ -106,7 +106,7 @@ func TestListAllFreeSlotsHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/availability/free"+tt.query, nil)
+			req := httptest.NewRequest(http.MethodGet, "/availabilities/free"+tt.query, nil)
 
 			ctx := req.Context()
 			if tt.injectUser {
