@@ -41,7 +41,7 @@ export default function UserCalendar() {
     useEffect(() => {
         if (!selectedDate) return;
         const iso = selectedDate.toISOString().slice(0, 10);
-        fetch(`/api/bookings/availability?date=${iso}`)
+        fetch(`/api/availability/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z`)
             .then((r) => r.json())
             .then((data) => {
                 // assuming your API returns { times: string[] }
