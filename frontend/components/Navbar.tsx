@@ -1,11 +1,20 @@
+"use client"
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { clearToken, getDecodedToken, isAuthenticated } from "../utils/auth";
 
 export default function Navbar() {
     const router = useRouter();
-    const auth = isAuthenticated();
-    const decoded = getDecodedToken();
+    const [auth, setAuth] = useState(false);
+    const [decoded, setDecoded] = useState<{ sub: string } | null>(null);
+
+    useEffect(() => {
+        const ok = isAuthenticated();
+        setAuth(ok);
+        if (ok) setDecoded(getDecodedToken());
+    }, []);
 
     function handleLogout() {
         clearToken();
