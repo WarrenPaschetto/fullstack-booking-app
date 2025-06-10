@@ -1,8 +1,11 @@
-"use client"
 import { useState, useEffect, useMemo } from "react";
 import Layout from "../../components/Layout";
-import Navbar from "../../components/Navbar";
+import dynamic from "next/dynamic";
 import { useRequireAuth } from "../../utils/useRequireAuth";
+
+const Navbar = dynamic(() => import("../../components/Navbar"), {
+    ssr: false,
+});
 
 export default function UserCalendar() {
     useRequireAuth("user");
