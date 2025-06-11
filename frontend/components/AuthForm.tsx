@@ -58,7 +58,9 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
 
                 // On success, backend should return { token: "<JWT>" }
                 const data = await resp.json();
+                localStorage.setItem("booking_app_token", data.token);
                 onSuccess(data.token);
+
             } else {
                 // login mode
                 const payload = { email, password };
@@ -80,7 +82,9 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                 }
 
                 const data = await resp.json();
+                localStorage.setItem("booking_app_token", data.token);
                 onSuccess(data.token);
+
             }
         } catch (err: unknown) {
             setErrorMsg(err instanceof Error ? err.message : "An unexpected error occurred");
