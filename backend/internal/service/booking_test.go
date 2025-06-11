@@ -514,3 +514,72 @@ func TestListUserBookings(t *testing.T) {
 		})
 	}
 }
+
+func TestListAllBookings(t *testing.T) {
+	now := time.Now().UTC()
+
+	b1 := db.Booking{
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		AppointmentStart: now.Add(24 * time.Hour),
+		DurationMinutes:  30,
+		CreatedAt:        now.Add(-48 * time.Hour),
+		UpdatedAt:        now.Add(-24 * time.Hour),
+	}
+	b2 := db.Booking{
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		AppointmentStart: now.Add(48 * time.Hour),
+		DurationMinutes:  60,
+		CreatedAt:        now.Add(-72 * time.Hour),
+		UpdatedAt:        now.Add(-36 * time.Hour),
+	}
+
+	tests := []struct {
+		name    string
+		mockFn  func(ctx context.Context) ([]db.Booking, error)
+		want    []db.Booking
+		wantErr bool
+	}{
+		{
+			name: "success returns bookings",
+			mockFn: func(ctx context.Context) ([]db.Booking, error) {
+				return []db.Booking{b1, b2}, nil
+			},
+			want:    []db.Booking{b1, b2},
+			wantErr: false,
+		},
+		{
+			name: "error from queries bubbles up",
+			mockFn: func(ctx context.Context) ([]db.Booking, error) {
+				return nil, errors.New("database failure")
+			},
+			want:    []db.Booking{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockQ := &fakeBookingRepo{
+				ListAllBookingsForAdminFn: tt.mockFn,
+			}
+			svc := NewBookingService(mockQ)
+
+			got, err := svc.ListAllBookings(context.Background())
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("ListAllBookings() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if len(got) != len(tt.want) {
+				t.Fatalf("ListAllBookings() returned %d bookings, want %d", len(got), len(tt.want))
+			}
+
+			for i := range got {
+				if got[i].ID != tt.want[i].ID {
+					t.Errorf("ListAllBookings()[%d].ID = %v; want %v", i, got[i].ID, tt.want[i].ID)
+				}
+			}
+		})
+	}
+}

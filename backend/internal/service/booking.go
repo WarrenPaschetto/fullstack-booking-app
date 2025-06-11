@@ -137,5 +137,9 @@ func (s *BookingService) ListUserBookings(
 }
 
 func (s *BookingService) ListAllBookings(ctx context.Context) ([]db.Booking, error) {
-	return s.queries.ListAllBookingsForAdmin(ctx)
+	bookings, err := s.queries.ListAllBookingsForAdmin(ctx)
+	if err != nil {
+		return []db.Booking{}, err
+	}
+	return bookings, nil
 }
