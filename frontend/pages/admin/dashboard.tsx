@@ -4,10 +4,9 @@ import { useRequireAuth } from "../../utils/useRequireAuth";
 import { useEffect, useState } from "react";
 
 interface Booking {
-    id: string;
-    user_id: string;
-    appointment_start: string;
-    duration_minutes: number;
+    ID: string;
+    AppointmentStart: string;
+    DurationMinutes: number;
 }
 
 export default function AdminDashboard() {
@@ -20,7 +19,7 @@ export default function AdminDashboard() {
             const token = localStorage.getItem("booking_app_token");
             if (!token) return;
 
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings`, {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings/all`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (resp.ok) {
@@ -42,21 +41,23 @@ export default function AdminDashboard() {
                         <thead className="border-b">
                             <tr>
                                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Booking ID</th>
-                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">User ID</th>
                                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Start Time</th>
                                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Duration (min)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {allBookings.map((b) => (
-                                <tr key={b.id} className="border-b hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{b.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{b.user_id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                                        {new Date(b.appointment_start).toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{b.duration_minutes}</td>
-                                </tr>
+                            {allBookings.map((b => {
+                                console.log(b);
+                                return (
+                                    <tr key={b.ID} className="border-b hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{b.ID}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                            {new Date(b.AppointmentStart).toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{b.DurationMinutes}</td>
+                                    </tr>
+                                );
+                            }
                             ))}
                         </tbody>
                     </table>

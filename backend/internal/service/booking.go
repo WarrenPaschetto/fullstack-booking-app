@@ -133,19 +133,9 @@ func (s *BookingService) ListUserBookings(
 	ctx context.Context,
 	userID uuid.UUID,
 ) ([]db.Booking, error) {
-	bookings, err := s.queries.ListBookingsForUser(ctx, userID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return []db.Booking{}, ErrNoBookingsFound
-		}
-		return []db.Booking{}, err
-	}
-	if len(bookings) == 0 {
-		return nil, ErrNoBookingsFound
-	}
-	if bookings[0].UserID != userID {
-		return []db.Booking{}, ErrNotAuthorized
-	}
+	return s.queries.ListBookingsForUser(ctx, userID)
+}
 
-	return bookings, nil
+func (s *BookingService) ListAllBookings(ctx context.Context) ([]db.Booking, error) {
+	return s.queries.ListAllBookingsForAdmin(ctx)
 }

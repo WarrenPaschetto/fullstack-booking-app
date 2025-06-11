@@ -8,7 +8,7 @@ import { clearToken, getDecodedToken, isAuthenticated } from "../utils/auth";
 export default function Navbar() {
     const router = useRouter();
     const [auth, setAuth] = useState(false);
-    const [decoded, setDecoded] = useState<{ sub: string } | null>(null);
+    const [decoded, setDecoded] = useState<{ firstName: string } | null>(null);
 
     useEffect(() => {
         const ok = isAuthenticated();
@@ -23,14 +23,13 @@ export default function Navbar() {
 
     return (
         <nav className="w-full bg-blue-200 bg-opacity-30 shadow-md rounded-2xl py-3 px-6 flex flex-col lg:flex-row justify-between items-center">
-            <div className="flex flex-row justify-end w-full"></div>
-            <Link href="/" className="font-bold text-2xl sm:text-4xl text-blue-800 py-2 flex flex-row justify-center w-full">
+            <Link href="/" className="font-bold text-2xl sm:text-4xl text-blue-800 py-2 flex flex-row justify-items-start">
                 BookingApp
             </Link>
 
             {auth ? (
                 <div className="flex items-center space-x-4">
-                    <span className="text-gray-600">{decoded?.sub}</span>
+                    <span className="text-gray-600">Welcome {decoded?.firstName}</span>
                     <button
                         onClick={handleLogout}
                         className="text-red-500 hover:text-red-700 text-sm"

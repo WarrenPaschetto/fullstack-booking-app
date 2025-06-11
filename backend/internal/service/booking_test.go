@@ -13,15 +13,16 @@ import (
 )
 
 type fakeBookingRepo struct {
-	overlaps              []db.Booking
-	overlapErr            error
-	created               db.Booking
-	createErr             error
-	DeleteBookingFn       func(ctx context.Context, arg db.DeleteBookingParams) error
-	RescheduleBookingFn   func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
-	GetBookingByIDFn      func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
-	ListBookingsForUserFn func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
-	CreateAvailabilityFn  func(ctx context.Context, arg db.CreateAvailabilityParams) error
+	overlaps                  []db.Booking
+	overlapErr                error
+	created                   db.Booking
+	createErr                 error
+	DeleteBookingFn           func(ctx context.Context, arg db.DeleteBookingParams) error
+	RescheduleBookingFn       func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
+	GetBookingByIDFn          func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
+	ListBookingsForUserFn     func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
+	CreateAvailabilityFn      func(ctx context.Context, arg db.CreateAvailabilityParams) error
+	ListAllBookingsForAdminFn func(ctx context.Context) ([]db.Booking, error)
 }
 
 func (f *fakeBookingRepo) CreateBooking(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error) {
@@ -48,6 +49,9 @@ func (f *fakeBookingRepo) ListBookingsForUser(ctx context.Context, id uuid.UUID)
 }
 func (f *fakeBookingRepo) CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) error {
 	return nil
+}
+func (f *fakeBookingRepo) ListAllBookingsForAdmin(ctx context.Context) ([]db.Booking, error) {
+	return f.ListAllBookingsForAdminFn(ctx)
 }
 
 var errSimulatedOverlap = errors.New("simulated error")

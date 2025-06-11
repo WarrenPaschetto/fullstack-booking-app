@@ -22,6 +22,7 @@ export function clearToken() {
 export interface DecodedJWT {
     sub: string;
     role: "user" | "admin";
+    firstName: string;
     exp: number;
     iat: number;
 }

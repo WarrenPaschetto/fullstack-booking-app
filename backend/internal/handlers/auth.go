@@ -157,10 +157,11 @@ func LoginHandler(q userQuerier) http.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub":  user.ID,
-			"role": user.UserRole,
-			"iat":  jwt.NewNumericDate(time.Now()),
-			"exp":  jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			"sub":       user.ID,
+			"role":      user.UserRole,
+			"firstName": user.FirstName,
+			"iat":       jwt.NewNumericDate(time.Now()),
+			"exp":       jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		})
 
 		tokenString, err := SignTokenFn(token, []byte(secret))
