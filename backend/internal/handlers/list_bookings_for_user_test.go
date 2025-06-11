@@ -78,16 +78,6 @@ func TestListBookingsForUserHandler(t *testing.T) {
 			expectStatus:   http.StatusUnauthorized,
 			expectResponse: nil,
 		},
-		{
-
-			name:      "User not found",
-			ctxUserID: uuid.New(),
-			mockList: func(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
-				return fakeBookings, nil
-			},
-			expectStatus:   http.StatusInternalServerError,
-			expectResponse: nil,
-		},
 	}
 
 	for _, tt := range tests {

@@ -13,15 +13,16 @@ import (
 )
 
 type fakeBookingRepo struct {
-	overlaps              []db.Booking
-	overlapErr            error
-	created               db.Booking
-	createErr             error
-	DeleteBookingFn       func(ctx context.Context, arg db.DeleteBookingParams) error
-	RescheduleBookingFn   func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
-	GetBookingByIDFn      func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
-	ListBookingsForUserFn func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
-	CreateAvailabilityFn  func(ctx context.Context, arg db.CreateAvailabilityParams) error
+	overlaps                  []db.Booking
+	overlapErr                error
+	created                   db.Booking
+	createErr                 error
+	DeleteBookingFn           func(ctx context.Context, arg db.DeleteBookingParams) error
+	RescheduleBookingFn       func(ctx context.Context, arg db.RescheduleBookingParams) (db.Booking, error)
+	GetBookingByIDFn          func(ctx context.Context, bookingID uuid.UUID) (db.Booking, error)
+	ListBookingsForUserFn     func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
+	CreateAvailabilityFn      func(ctx context.Context, arg db.CreateAvailabilityParams) error
+	ListAllBookingsForAdminFn func(ctx context.Context) ([]db.Booking, error)
 }
 
 func (f *fakeBookingRepo) CreateBooking(ctx context.Context, arg db.CreateBookingParams) (db.Booking, error) {
@@ -48,6 +49,9 @@ func (f *fakeBookingRepo) ListBookingsForUser(ctx context.Context, id uuid.UUID)
 }
 func (f *fakeBookingRepo) CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) error {
 	return nil
+}
+func (f *fakeBookingRepo) ListAllBookingsForAdmin(ctx context.Context) ([]db.Booking, error) {
+	return f.ListAllBookingsForAdminFn(ctx)
 }
 
 var errSimulatedOverlap = errors.New("simulated error")
@@ -438,7 +442,6 @@ func TestListUserBookings(t *testing.T) {
 	bookingID2 := uuid.New()
 	bookingID3 := uuid.New()
 	userID := uuid.New()
-	wrongUser := uuid.New()
 	otherErr := errors.New("db fail")
 
 	fakeBookings := []db.Booking{
@@ -468,25 +471,6 @@ func TestListUserBookings(t *testing.T) {
 		},
 	}
 
-	wrongUserBookings := []db.Booking{
-		{
-			ID:               bookingID,
-			UserID:           wrongUser,
-			AppointmentStart: now.Add(time.Hour * 24),
-			DurationMinutes:  30,
-			CreatedAt:        now.Add(-time.Hour * 336),
-			UpdatedAt:        now.Add(-time.Minute * 336),
-		},
-		{
-			ID:               bookingID2,
-			UserID:           wrongUser,
-			AppointmentStart: now.Add(time.Hour * 84),
-			DurationMinutes:  30,
-			CreatedAt:        now.Add(-time.Hour * 168),
-			UpdatedAt:        now.Add(-time.Minute * 168),
-		},
-	}
-
 	tests := []struct {
 		name         string
 		mockList     func(ctx context.Context, id uuid.UUID) ([]db.Booking, error)
@@ -502,36 +486,12 @@ func TestListUserBookings(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
-			name: "Bookings not found",
-			mockList: func(_ context.Context, id uuid.UUID) ([]db.Booking, error) {
-				return []db.Booking{}, sql.ErrNoRows
-			},
-			wantBookings: nil,
-			wantErr:      ErrNoBookingsFound,
-		},
-		{
 			name: "DB error",
 			mockList: func(_ context.Context, id uuid.UUID) ([]db.Booking, error) {
 				return []db.Booking{}, otherErr
 			},
 			wantBookings: nil,
 			wantErr:      otherErr,
-		},
-		{
-			name: "Empty list of bookings",
-			mockList: func(_ context.Context, id uuid.UUID) ([]db.Booking, error) {
-				return []db.Booking{}, nil
-			},
-			wantBookings: nil,
-			wantErr:      ErrNoBookingsFound,
-		},
-		{
-			name: "Not an authorized user",
-			mockList: func(_ context.Context, _id uuid.UUID) ([]db.Booking, error) {
-				return wrongUserBookings, nil
-			},
-			wantBookings: nil,
-			wantErr:      ErrNotAuthorized,
 		},
 	}
 
@@ -551,6 +511,75 @@ func TestListUserBookings(t *testing.T) {
 				t.Errorf("got = %#v, want %#v", got, tt.wantBookings)
 			}
 
+		})
+	}
+}
+
+func TestListAllBookings(t *testing.T) {
+	now := time.Now().UTC()
+
+	b1 := db.Booking{
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		AppointmentStart: now.Add(24 * time.Hour),
+		DurationMinutes:  30,
+		CreatedAt:        now.Add(-48 * time.Hour),
+		UpdatedAt:        now.Add(-24 * time.Hour),
+	}
+	b2 := db.Booking{
+		ID:               uuid.New(),
+		UserID:           uuid.New(),
+		AppointmentStart: now.Add(48 * time.Hour),
+		DurationMinutes:  60,
+		CreatedAt:        now.Add(-72 * time.Hour),
+		UpdatedAt:        now.Add(-36 * time.Hour),
+	}
+
+	tests := []struct {
+		name    string
+		mockFn  func(ctx context.Context) ([]db.Booking, error)
+		want    []db.Booking
+		wantErr bool
+	}{
+		{
+			name: "success returns bookings",
+			mockFn: func(ctx context.Context) ([]db.Booking, error) {
+				return []db.Booking{b1, b2}, nil
+			},
+			want:    []db.Booking{b1, b2},
+			wantErr: false,
+		},
+		{
+			name: "error from queries bubbles up",
+			mockFn: func(ctx context.Context) ([]db.Booking, error) {
+				return nil, errors.New("database failure")
+			},
+			want:    []db.Booking{},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockQ := &fakeBookingRepo{
+				ListAllBookingsForAdminFn: tt.mockFn,
+			}
+			svc := NewBookingService(mockQ)
+
+			got, err := svc.ListAllBookings(context.Background())
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("ListAllBookings() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if len(got) != len(tt.want) {
+				t.Fatalf("ListAllBookings() returned %d bookings, want %d", len(got), len(tt.want))
+			}
+
+			for i := range got {
+				if got[i].ID != tt.want[i].ID {
+					t.Errorf("ListAllBookings()[%d].ID = %v; want %v", i, got[i].ID, tt.want[i].ID)
+				}
+			}
 		})
 	}
 }

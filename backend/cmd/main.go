@@ -40,15 +40,15 @@ func main() {
 	bookings.Use(middleware.AuthMiddleware)
 
 	bookings.Handle("", h.CreateBookingHandler()).Methods("POST")
-	bookings.Handle("", h.ListBookingsForUserHandler()).Methods("GET")
-	bookings.Handle("/{id}", h.GetBookingByIDHandler()).Methods("GET")
+	//bookings.Handle("", h.ListBookingsForUserHandler()).Methods("GET")
+	//bookings.Handle("/{id}", h.GetBookingByIDHandler()).Methods("GET")
 	bookings.Handle("/{id}", h.RescheduleBookingHandler()).Methods("PUT")
 	bookings.Handle("/{id}", h.DeleteBookingHandler()).Methods("DELETE")
 
-	availabilities := r.PathPrefix("/api/availabilities").Subrouter()
-	availabilities.Use(middleware.AuthMiddleware)
+	admins := r.PathPrefix("/api/bookings").Subrouter()
+	admins.Use(middleware.AuthMiddleware)
 
-	availabilities.Handle("/free", handlers.ListAllFreeSlotsHandler(queries)).Methods("GET")
+	admins.Handle("/all", h.ListAllBookingsHandler()).Methods("GET")
 
 	handlerWithCORS := middleware.CORS(r)
 
