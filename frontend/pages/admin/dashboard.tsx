@@ -22,10 +22,10 @@ export default function AdminDashboard() {
     useRequireAuth("admin");
 
     const [view, setView] = useState<View>("allBookings");
-    const [users, setUsers] = useState<User[]>([]);
+    //const [users, setUsers] = useState<User[]>([]);
     const [allBookings, setAllBookings] = useState<Booking[]>([]);
-    const [selectedUserBookings, setSelectedUserBookings] = useState<Booking[]>([]);
-    const [patterns, setPatterns] = useState<any[]>([]);
+    //const [selectedUserBookings, setSelectedUserBookings] = useState<Booking[]>([]);
+    //const [patterns, setPatterns] = useState<any[]>([]);
 
     //const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
