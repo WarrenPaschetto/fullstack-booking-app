@@ -27,14 +27,16 @@ export default function AdminDashboard() {
     const [selectedUserBookings, setSelectedUserBookings] = useState<Booking[]>([]);
     const [patterns, setPatterns] = useState<any[]>([]);
 
-    const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+    //const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
     useEffect(() => {
         async function fetchAllBookings() {
             const token = localStorage.getItem("booking_app_token");
             if (!token) return;
 
-            const resp = await fetch(`${API}/api/bookings/all`, { headers: { Authorization: `Bearer ${token}` } });
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings/all`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             if (resp.ok) {
                 const data = await resp.json();
                 setAllBookings(data);
