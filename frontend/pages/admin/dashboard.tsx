@@ -94,12 +94,6 @@ export default function AdminDashboard() {
         const id = selectedBooking.ID.toString();
     }, [selectedBooking]);
 
-    // Update tempBooking
-    useEffect(() => {
-
-    }, [selectedBooking])
-
-
     return (
         <Layout>
             <Navbar />
