@@ -1,4 +1,3 @@
-//import { Timestamp } from "next/dist/server/lib/cache-handlers/types";
 import Layout from "../../components/Layout";
 import Navbar from "../../components/Navbar";
 import { useRequireAuth } from "../../utils/useRequireAuth";
@@ -89,10 +88,10 @@ export default function AdminDashboard() {
     }, []);
 
     // Select a booking in order to update or delete it
-    useEffect(() => {
-        if (!selectedBooking) return;
-        const id = selectedBooking.ID.toString();
-    }, [selectedBooking]);
+    //useEffect(() => {
+    //    if (!selectedBooking) return;
+    //    const id = selectedBooking.ID.toString();
+    //}, [selectedBooking]);
 
     return (
         <Layout>
