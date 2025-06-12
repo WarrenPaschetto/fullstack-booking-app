@@ -9,12 +9,12 @@ interface Booking {
     DurationMinutes: number;
 }
 
-interface User {
-    ID: string;
-    FirstName: string;
-    LastName: string;
-    Email: string;
-}
+//interface User {
+//    ID: string;
+//    FirstName: string;
+//    LastName: string;
+//    Email: string;
+//}
 
 type View = "allBookings" | "users" | "userBookings" | "patterns";
 
