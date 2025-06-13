@@ -50,6 +50,7 @@ func main() {
 
 	admins.Handle("/bookings/all", h.ListAllBookingsHandler()).Methods("GET")
 	admins.Handle("/users/all", handlers.ListAllUsersHandler(queries)).Methods("GET")
+	admins.Handle("/avail-pattern/create", handlers.CreateAvailabilityPatternHandler(queries)).Methods("POST")
 
 	handlerWithCORS := middleware.CORS(r)
 
