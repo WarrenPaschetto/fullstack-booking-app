@@ -1,6 +1,5 @@
 import React from 'react';
 import DatePicker from 'react-datepicker';
-import { formatAppointment } from '../utils/dateConversion';
 
 interface Props {
     weekValue: number
