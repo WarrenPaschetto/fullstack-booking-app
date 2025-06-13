@@ -1,7 +1,10 @@
-import Layout from "../../components/Layout";
-import Navbar from "../../components/Navbar";
-import { useRequireAuth } from "../../utils/useRequireAuth";
-import { useEffect, useState } from "react";
+import Layout from "@/components/Layout";
+import Navbar from "@/components/Navbar";
+import { useRequireAuth } from "@/utils/useRequireAuth";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import "react-datepicker/dist/react-datepicker.css";
+import UpdateBookingForm from "@/components/UpdateBookingForm";
+import { updateBooking } from "@/utils/updateBookingApi";
 
 interface Booking {
     ID: string;
@@ -16,36 +19,78 @@ interface Booking {
 //    Email: string;
 //}
 
-type View = "allBookings" | "users" | "userBookings" | "patterns";
+type View = "allBookings" | "users" | "userBookings" | "patterns" | "update";
 
 export default function AdminDashboard() {
     useRequireAuth("admin");
 
+    const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined)
     const [view, setView] = useState<View>("allBookings");
     //const [users, setUsers] = useState<User[]>([]);
     const [allBookings, setAllBookings] = useState<Booking[]>([]);
     //const [selectedUserBookings, setSelectedUserBookings] = useState<Booking[]>([]);
     //const [patterns, setPatterns] = useState<any[]>([]);
+    const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+    const [dateValue, setDateValue] = useState<Date | null>(null);
+    const [durationValue, setDurationValue] = useState<number>(60);
+    const [token, setToken] = useState<string>("");
+
+    useEffect(() => {
+        const stored = localStorage.getItem("booking_app_token")
+        if (stored) {
+            setToken(stored)
+        }
+    }, [])
 
     //const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-    useEffect(() => {
-        async function fetchAllBookings() {
-            const token = localStorage.getItem("booking_app_token");
-            if (!token) return;
+    const fetchAllBookings = useCallback(async () => {
+        const resp = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings/all`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (resp.ok) {
+            const data = await resp.json();
+            setAllBookings(data);
+        }
+    }, [token]);
 
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings/all`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (resp.ok) {
-                const data = await resp.json();
-                setAllBookings(data);
+    // Get all bookings upon startup
+    useEffect(() => {
+        if (token === "") return;
+        fetchAllBookings().catch(console.error);
+    }, [token, fetchAllBookings]);
+
+
+    async function handleUpdateSubmit(e: FormEvent) {
+        e.preventDefault()
+
+        setErrorMsg(undefined)
+        if (!selectedBooking || !dateValue) return
+
+        try {
+            await updateBooking(
+                { id: selectedBooking.ID, appointmentStart: dateValue, durationMinutes: durationValue },
+                token
+            )
+            await fetchAllBookings()
+            setView("allBookings")
+            setSelectedBooking(null)
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setErrorMsg(err.message);
+            } else {
+                // fallback for non-Error throws
+                setErrorMsg(String(err));
             }
         }
-        fetchAllBookings();
-    }, []);
+    }
 
-
+    // Select a booking in order to update or delete it
+    //useEffect(() => {
+    //    if (!selectedBooking) return;
+    //    const id = selectedBooking.ID.toString();
+    //}, [selectedBooking]);
 
     return (
         <Layout>
@@ -87,6 +132,22 @@ export default function AdminDashboard() {
                         {/* ...same as before */}
                     </div>
                 )}
+
+                {/* Update view */}
+                {view === "update" && selectedBooking && (
+                    <UpdateBookingForm
+                        key={selectedBooking.ID}
+                        selectedBooking={selectedBooking}
+                        dateValue={dateValue}
+                        setDateValue={setDateValue}
+                        durationValue={durationValue}
+                        setDurationValue={setDurationValue}
+                        onSubmit={handleUpdateSubmit}
+                        errorMsg={errorMsg}
+                    />
+                )}
+
+
                 {/* ALL BOOKINGS view */}
                 {view === "allBookings" && (
 
@@ -102,10 +163,14 @@ export default function AdminDashboard() {
                             </thead>
                             <tbody>
                                 {allBookings.map((b => {
-                                    console.log(b);
                                     return (
-                                        <tr key={b.ID} className="border-b hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{b.ID}</td>
+                                        <tr key={b.ID} className={`border-b hover:bg-blue-100 ${selectedBooking == b ? "bg-blue-300" : "bg-white"}`} onClick={() => {
+                                            setSelectedBooking((prev) =>
+                                                prev?.ID === b.ID ? null : b
+                                            )
+                                        }
+                                        }>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 ">{b.ID}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                                                 {new Date(b.AppointmentStart).toLocaleString()}
                                             </td>
@@ -116,6 +181,22 @@ export default function AdminDashboard() {
                                 ))}
                             </tbody>
                         </table>
+                        {selectedBooking && (
+                            <div className="bg-white shadow-md rounded-lg p-6">
+                                <button
+                                    className="px-4 py-2 bg-green-600 text-white rounded"
+                                    onClick={() => setView("update")}
+                                >
+                                    Update
+                                </button>
+                                <button
+                                    className="px-4 py-2 bg-red-600 text-white rounded"
+                                    onClick={() => setView("patterns")}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

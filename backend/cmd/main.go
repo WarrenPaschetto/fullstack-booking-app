@@ -39,7 +39,7 @@ func main() {
 	bookings := r.PathPrefix("/api/bookings").Subrouter()
 	bookings.Use(middleware.AuthMiddleware)
 
-	bookings.Handle("", h.CreateBookingHandler()).Methods("POST")
+	bookings.Handle("/create", h.CreateBookingHandler()).Methods("POST")
 	//bookings.Handle("", h.ListBookingsForUserHandler()).Methods("GET")
 	//bookings.Handle("/{id}", h.GetBookingByIDHandler()).Methods("GET")
 	bookings.Handle("/{id}", h.RescheduleBookingHandler()).Methods("PUT")
