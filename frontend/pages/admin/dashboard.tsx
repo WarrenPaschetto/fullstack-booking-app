@@ -1,10 +1,10 @@
-import Layout from "../../components/Layout";
-import Navbar from "../../components/Navbar";
-import { useRequireAuth } from "../../utils/useRequireAuth";
+import Layout from "@/components/Layout";
+import Navbar from "@/components/Navbar";
+import { useRequireAuth } from "@/utils/useRequireAuth";
 import { FormEvent, useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { formatAppointment } from "../../utils/dateConversion";
+import UpdateBookingForm from "@/components/UpdateBookingForm";
+import { updateBooking } from "@/utils/updateBookingApi";
 
 interface Booking {
     ID: string;
@@ -24,6 +24,7 @@ type View = "allBookings" | "users" | "userBookings" | "patterns" | "update";
 export default function AdminDashboard() {
     useRequireAuth("admin");
 
+    const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined)
     const [view, setView] = useState<View>("allBookings");
     //const [users, setUsers] = useState<User[]>([]);
     const [allBookings, setAllBookings] = useState<Booking[]>([]);
@@ -32,10 +33,21 @@ export default function AdminDashboard() {
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
     const [dateValue, setDateValue] = useState<Date | null>(null);
     const [durationValue, setDurationValue] = useState<number>(60);
-    const [bookingId, setBookingId] = useState("");
+    const [token, setToken] = useState<string>("");
 
-    const token = localStorage.getItem("booking_app_token");
-    if (!token) return;
+    useEffect(() => {
+        const stored = localStorage.getItem("booking_app_token")
+        if (stored) {
+            setToken(stored)
+        }
+    }, [])
+
+    // Get all bookings upon startup
+    useEffect(() => {
+        if (token === "") return;
+        fetchAllBookings().catch(console.error);
+    }, [token]);
+
 
     //const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
@@ -50,42 +62,24 @@ export default function AdminDashboard() {
         }
     }
 
-    async function handleSubmit(e: FormEvent) {
-        e.preventDefault();
-        if (!selectedBooking || !dateValue) return;
-        const newStart = dateValue.toISOString();
-        setSelectedBooking({ ...selectedBooking, AppointmentStart: newStart, DurationMinutes: durationValue });
-        const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings/${bookingId}`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    appointment_start: newStart,
-                    duration_minutes: durationValue,
-                }),
-            }
-        );
+    async function handleUpdateSubmit(e: FormEvent) {
+        e.preventDefault()
 
-        if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Failed to update booking: ${res.status} ${errText}`);
+        setErrorMsg(undefined)
+        if (!selectedBooking || !dateValue) return
+
+        try {
+            await updateBooking(
+                { id: selectedBooking.ID, appointmentStart: dateValue, durationMinutes: durationValue },
+                token
+            )
+            await fetchAllBookings()
+            setView("allBookings")
+            setSelectedBooking(null)
+        } catch (err: any) {
+            setErrorMsg(err.message)
         }
-
-        // Refresh bookings table
-        await fetchAllBookings();
-
-        setView("allBookings");
-        setSelectedBooking(null);
     }
-
-    // Get all bookings upon startup
-    useEffect(() => {
-        fetchAllBookings().catch(console.error);
-    }, []);
 
     // Select a booking in order to update or delete it
     //useEffect(() => {
@@ -135,59 +129,17 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Update view */}
-                {view === "update" && (
-                    <div className="flex items-center justify-center">
-                        {/* The bluish–purple “card” */}
-                        <form
-                            onSubmit={handleSubmit}
-                            className="bg-gradient-to-br from-blue-400 to-purple-700 rounded-2xl shadow-2xl p-8 w-full max-w-md
-                          text-white flex flex-col space-y-6 m-10"
-                        >
-                            {/* Heading */}
-                            <h2 className="text-3xl text-blue-50 font-bold text-center">
-                                Update Booking
-                            </h2>
-                            <div className="space-y-4">
-                                <label className="block  mb-1 text-lg font-medium text-blue-50">
-                                    <span className="block"> From: {selectedBooking && formatAppointment(selectedBooking.AppointmentStart)}</span>
-                                    <span>To: </span>
-                                    <DatePicker
-                                        selected={dateValue}
-                                        onChange={date => setDateValue(date)}
-                                        showTimeSelect
-                                        timeIntervals={30}
-                                        dateFormat="Pp"
-                                        className="bg-blue-200 text-blue-800 font-bold text-lg ml-6"
-                                    />
-                                </label>
-                                <label className="block">
-                                    <span className="block mb-1 text-lg text-blue-50 font-medium">Duration in Minutes</span>
-                                    <select
-                                        required
-                                        value={durationValue}
-                                        onChange={e => setDurationValue(Number(e.target.value))}
-                                        className="bg-blue-200 text-blue-800 font-bold text-lg ml-6"
-                                    >
-                                        <option value="" disabled>
-                                            Select duration
-                                        </option>
-                                        <option value={30}>30</option>
-                                        <option value={60}>60</option>
-                                    </select>
-                                </label>
-                            </div>
-                            {/* Error message, if any */}
-                            {/*errorMsg && <p className="text-red-300 text-sm text-center">{errorMsg}</p>*/}
-
-                            {/* Submit button */}
-                            <button
-                                type="submit"
-                                className="w-full text-blue-700 bg-blue-200 bg-opacity-20 hover:bg-opacity-30 py-2 
-                                rounded-lg font-semibold transition disabled:opacity-50 hover:bg-blue-400"
-                            > Submit Changes
-                            </button>
-                        </form>
-                    </div>
+                {view === "update" && selectedBooking && (
+                    <UpdateBookingForm
+                        key={selectedBooking.ID}
+                        selectedBooking={selectedBooking}
+                        dateValue={dateValue}
+                        setDateValue={setDateValue}
+                        durationValue={durationValue}
+                        setDurationValue={setDurationValue}
+                        onSubmit={handleUpdateSubmit}
+                        errorMsg={errorMsg}
+                    />
                 )}
 
 
@@ -211,7 +163,6 @@ export default function AdminDashboard() {
                                             setSelectedBooking((prev) =>
                                                 prev?.ID === b.ID ? null : b
                                             )
-                                            setBookingId(b.ID);
                                         }
                                         }>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 ">{b.ID}</td>
