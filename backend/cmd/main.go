@@ -45,10 +45,11 @@ func main() {
 	bookings.Handle("/{id}", h.RescheduleBookingHandler()).Methods("PUT")
 	bookings.Handle("/{id}", h.DeleteBookingHandler()).Methods("DELETE")
 
-	admins := r.PathPrefix("/api/bookings").Subrouter()
+	admins := r.PathPrefix("/api").Subrouter()
 	admins.Use(middleware.AuthMiddleware)
 
-	admins.Handle("/all", h.ListAllBookingsHandler()).Methods("GET")
+	admins.Handle("/bookings/all", h.ListAllBookingsHandler()).Methods("GET")
+	admins.Handle("/users/all", handlers.ListAllUsersHandler(queries)).Methods("GET")
 
 	handlerWithCORS := middleware.CORS(r)
 

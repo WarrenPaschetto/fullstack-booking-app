@@ -12,12 +12,13 @@ interface Booking {
     DurationMinutes: number;
 }
 
-//interface User {
-//    ID: string;
-//    FirstName: string;
-//    LastName: string;
-//    Email: string;
-//}
+interface User {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    user_role: string;
+}
 
 type View = "allBookings" | "users" | "userBookings" | "patterns" | "update";
 
@@ -26,9 +27,9 @@ export default function AdminDashboard() {
 
     const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined)
     const [view, setView] = useState<View>("allBookings");
-    //const [users, setUsers] = useState<User[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [allBookings, setAllBookings] = useState<Booking[]>([]);
-    //const [selectedUserBookings, setSelectedUserBookings] = useState<Booking[]>([]);
     //const [patterns, setPatterns] = useState<any[]>([]);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
     const [dateValue, setDateValue] = useState<Date | null>(null);
@@ -54,6 +55,30 @@ export default function AdminDashboard() {
             setAllBookings(data);
         }
     }, [token]);
+
+    useEffect(() => {
+        if (view !== "users" || !token) return;
+
+        (async () => {
+            setErrorMsg("");
+            try {
+                const resp = await fetch(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/users/all`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    throw new Error(`Error ${resp.status}: ${text}`);
+                }
+                const data: User[] = await resp.json();
+                console.log(data);
+                setAllUsers(data);
+            } catch (err: unknown) {
+                console.error(err);
+                setErrorMsg(err instanceof Error ? err.message : String(err));
+            }
+        })();
+    }, [view, token]);
 
     // Admin delete booking by ID
     async function handleDeleteBooking() {
@@ -95,7 +120,7 @@ export default function AdminDashboard() {
 
     }
 
-    // Get all bookings upon startup
+    // Get all bookings and users upon startup
     useEffect(() => {
         if (token === "") return;
         fetchAllBookings().catch(console.error);
@@ -187,6 +212,71 @@ export default function AdminDashboard() {
                     />
                 )}
 
+                {/* ALL USERS view */}
+                {view === "users" && (
+                    <div className="bg-white shadow-md rounded-lg p-6">
+                        <h3 className="text-xl font-medium mb-4">Current Users</h3>
+
+                        {errorMsg && (
+                            <p className="text-red-500 mb-4">{errorMsg}</p>
+                        )}
+
+                        {allUsers.length === 0 ? (
+                            <p>No users found.</p>
+                        ) : (
+                            <table className="min-w-full bg-white">
+                                <thead className="border-b">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Last Name</th>
+                                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">First Name</th>
+                                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {allUsers.filter(u => (u.user_role !== "admin")).map((u => {
+                                        return (
+                                            <tr key={u.id} className={`border-b hover:bg-blue-100 ${selectedUser == u ? "bg-blue-300" : "bg-white"}`} onClick={() => {
+                                                setSelectedUser((prev) =>
+                                                    prev?.id === u.id ? null : u
+                                                )
+                                            }
+                                            }>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 ">{u.last_name}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                                    {u.first_name}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{u.email}</td>
+                                            </tr>
+                                        );
+                                    }
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                        {selectedUser && (
+                            <div className="bg-white shadow-md rounded-lg p-6">
+                                <button
+                                    className="px-4 py-2 bg-green-600 text-white rounded"
+                                    onClick={() => setView("update")}
+                                >
+                                    Update
+                                </button>
+                                <button
+                                    className="px-4 py-2 bg-blue-600 text-white rounded"
+                                    onClick={() => setView("update")}
+                                >
+                                    Create Appt.
+                                </button>
+                                <button
+                                    className="px-4 py-2 bg-red-600 text-white rounded"
+                                    onClick={handleDeleteBooking}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* ALL BOOKINGS view */}
                 {view === "allBookings" && (
