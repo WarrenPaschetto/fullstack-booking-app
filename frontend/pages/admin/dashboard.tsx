@@ -55,6 +55,46 @@ export default function AdminDashboard() {
         }
     }, [token]);
 
+    // Admin delete booking by ID
+    async function handleDeleteBooking() {
+        setErrorMsg(undefined);
+
+        if (!selectedBooking) {
+            setErrorMsg("No booking selected");
+            return;
+        }
+
+        if (!window.confirm("Are you sure you want to delete this booking?")) {
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings/${selectedBooking.ID}`,
+                {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Delete failed: ${res.status} ${text}`);
+            }
+
+            await fetchAllBookings();
+            setView("allBookings");
+            setSelectedBooking(null);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setErrorMsg(err.message);
+            } else {
+                setErrorMsg(String(err));
+            }
+        }
+
+    }
+
     // Get all bookings upon startup
     useEffect(() => {
         if (token === "") return;
@@ -191,7 +231,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button
                                     className="px-4 py-2 bg-red-600 text-white rounded"
-                                    onClick={() => setView("patterns")}
+                                    onClick={handleDeleteBooking}
                                 >
                                     Delete
                                 </button>
