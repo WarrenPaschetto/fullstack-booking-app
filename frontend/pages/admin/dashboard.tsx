@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import Navbar from "@/components/Navbar";
 import { useRequireAuth } from "@/utils/useRequireAuth";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import UpdateBookingForm from "@/components/UpdateBookingForm";
 import { updateBooking } from "@/utils/updateBookingApi";
@@ -42,25 +42,25 @@ export default function AdminDashboard() {
         }
     }, [])
 
-    // Get all bookings upon startup
-    useEffect(() => {
-        if (token === "") return;
-        fetchAllBookings().catch(console.error);
-    }, [token]);
-
-
     //const API = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-    async function fetchAllBookings() {
-
-        const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080"}/api/bookings/all`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+    const fetchAllBookings = useCallback(async () => {
+        const resp = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings/all`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
         if (resp.ok) {
             const data = await resp.json();
             setAllBookings(data);
         }
-    }
+    }, [token]);
+
+    // Get all bookings upon startup
+    useEffect(() => {
+        if (token === "") return;
+        fetchAllBookings().catch(console.error);
+    }, [token, fetchAllBookings]);
+
 
     async function handleUpdateSubmit(e: FormEvent) {
         e.preventDefault()
@@ -76,8 +76,13 @@ export default function AdminDashboard() {
             await fetchAllBookings()
             setView("allBookings")
             setSelectedBooking(null)
-        } catch (err: any) {
-            setErrorMsg(err.message)
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setErrorMsg(err.message);
+            } else {
+                // fallback for non-Error throws
+                setErrorMsg(String(err));
+            }
         }
     }
 

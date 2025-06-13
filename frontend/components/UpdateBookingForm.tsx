@@ -1,5 +1,5 @@
 import React from 'react';
-import DatePicker, { registerLocale } from 'react-datepicker';
+import DatePicker from 'react-datepicker';
 import { formatAppointment } from '../utils/dateConversion';
 
 interface Props {
