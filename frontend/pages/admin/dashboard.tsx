@@ -5,6 +5,8 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import UpdateBookingForm from "@/components/UpdateBookingForm";
 import { updateBooking } from "@/utils/updateBookingApi";
+import AvailabilityPatternForm from "@/components/AvailabilityPatternForm";
+import { availabilityPattern } from "@/utils/availPatternApi";
 
 interface Booking {
     ID: string;
@@ -35,6 +37,9 @@ export default function AdminDashboard() {
     const [dateValue, setDateValue] = useState<Date | null>(null);
     const [durationValue, setDurationValue] = useState<number>(60);
     const [token, setToken] = useState<string>("");
+    const [weekValue, setWeekValue] = useState<number>(0);
+    const [startTimeValue, setStartTimeValue] = useState<Date | null>(null)
+    const [endTimeValue, setEndTimeValue] = useState<Date | null>(null)
 
     useEffect(() => {
         const stored = localStorage.getItem("booking_app_token")
@@ -151,6 +156,26 @@ export default function AdminDashboard() {
         }
     }
 
+    async function handleAvailPatternSubmit(e: FormEvent) {
+        e.preventDefault()
+
+        setErrorMsg(undefined)
+        if (!startTimeValue || !endTimeValue) return
+
+        try {
+            await availabilityPattern(
+                { dayOfWeek: weekValue, startTime: startTimeValue, endTime: endTimeValue },
+                token
+            )
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setErrorMsg(err.message);
+            } else {
+                setErrorMsg(String(err));
+            }
+        }
+    }
+
     // Select a booking in order to update or delete it
     //useEffect(() => {
     //    if (!selectedBooking) return;
@@ -192,10 +217,15 @@ export default function AdminDashboard() {
 
                 {/* PATTERNS view */}
                 {view === "patterns" && (
-                    <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl mb-4">Availability Patterns</h3>
-                        {/* ...same as before */}
-                    </div>
+                    <AvailabilityPatternForm
+                        weekValue={weekValue}
+                        setWeekValue={setWeekValue}
+                        startTimeValue={startTimeValue}
+                        setStartTimeValue={setStartTimeValue}
+                        endTimeValue={endTimeValue}
+                        setEndTimeValue={setEndTimeValue}
+                        onSubmit={handleAvailPatternSubmit}
+                        errorMsg={errorMsg} />
                 )}
 
                 {/* Update view */}
