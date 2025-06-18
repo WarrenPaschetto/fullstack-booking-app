@@ -14,8 +14,8 @@ import (
 type mockAvailabilityQueries struct {
 	createPatternCalled     bool
 	createAvailabilityCalls int
-	errOnPattern             error
-	errOnSlot                error
+	errOnPattern            error
+	errOnSlot               error
 }
 
 func (m *mockAvailabilityQueries) CreateAvailabilityPattern(ctx context.Context, arg db.CreateAvailabilityPatternParams) error {
@@ -32,7 +32,7 @@ func TestCreatePatternAndSlots(t *testing.T) {
 	providerID := uuid.New()
 	start := time.Date(2025, 6, 1, 9, 0, 0, 0, time.UTC)
 	end := time.Date(2025, 6, 29, 17, 0, 0, 0, time.UTC) // Includes several matching weekdays
-	
+
 	t.Run("successfully creates pattern and slots", func(t *testing.T) {
 		mock := &mockAvailabilityQueries{}
 		svc := NewAvailabilityService(mock)
