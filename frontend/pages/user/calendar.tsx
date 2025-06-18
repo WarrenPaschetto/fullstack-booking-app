@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import Layout from "../../components/Layout";
 import dynamic from "next/dynamic";
 import { useRequireAuth } from "../../utils/useRequireAuth";
+import { createBooking } from "@/utils/createBookingApi";
 
 const Navbar = dynamic(() => import("../../components/Navbar"), {
     ssr: false,
@@ -16,7 +17,10 @@ export default function UserCalendar() {
 
     //–– STATE ––
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+    const [availableTimes, setAvailableTimes] = useState<
+        { id: string; displayTime: string; startTime: string }[]
+    >([]);
+    const [selectedTime, setSelectedTime] = useState<string>("");
 
     //–– HELPERS ––
     // how many days in this month
@@ -62,11 +66,13 @@ export default function UserCalendar() {
                     hour12: true,
                 });
 
-                const times = data.map((slot) =>
-                    formatter.format(new Date(slot.start_time))
-                );
+                const formatted = data.map((slot) => ({
+                    id: slot.id,
+                    displayTime: formatter.format(new Date(slot.start_time)),
+                    startTime: slot.start_time,
+                }));
 
-                setAvailableTimes(times);
+                setAvailableTimes(formatted);
             })
             .catch(() => setAvailableTimes([]));
     }, [selectedDate]);
@@ -124,18 +130,67 @@ export default function UserCalendar() {
                 {/* Availability Panel */}
                 {selectedDate && (
                     <div className="mt-6 text-left">
-                        <h2 className="text-2xl font-semibold mb-2">
-                            Times on {selectedDate.toLocaleDateString()}
-                        </h2>
-                        {availableTimes.length > 0 ? (
-                            <ul className="list-disc list-inside space-y-1">
-                                {availableTimes.map((t) => (
-                                    <li key={t}>{t}</li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-gray-500">No available times.</p>
-                        )}
+                        <table className="min-w-2/3 bg-white">
+                            <thead className="border-b">
+                                <tr>
+                                    <h2 className="text-2xl font-semibold mb-2">
+                                        Times on {selectedDate.toLocaleDateString()}
+                                    </h2>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {availableTimes.length > 0 ? (
+                                    <div className="grid grid-cols-7 gap-4 mt-4">
+                                        {availableTimes.map((slot) => (
+                                            <button
+                                                key={slot.id}
+                                                onClick={async () => {
+                                                    const confirmBooking = window.confirm(`Are you sure you want to book ${slot.displayTime}?`);
+                                                    if (confirmBooking) {
+
+                                                        setSelectedTime(slot.displayTime);
+
+                                                        try {
+
+                                                            const token = localStorage.getItem("booking_app_token");
+                                                            if (!token) {
+                                                                alert("Missing auth token");
+                                                                return;
+                                                            }
+
+                                                            await createBooking(
+                                                                {
+                                                                    id: slot.id,
+                                                                    appointmentStart: new Date(slot.startTime),
+                                                                    durationMinutes: 60,
+                                                                },
+                                                                token
+                                                            );
+
+                                                            alert("Booking confirmed!");
+                                                        } catch (err) {
+                                                            if (err instanceof Error) {
+                                                                console.error(err.message);
+                                                                alert(err.message);
+                                                            } else {
+                                                                console.error("Unknown error", err);
+                                                                alert("An unknown error occurred.");
+                                                            }
+                                                        }
+                                                    }
+                                                }}
+                                                className={`p-2 rounded ${selectedTime === slot.displayTime ? "invisible" : "hover:bg-blue-100"}`}
+                                            >
+                                                {slot.displayTime}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                ) : (
+                                    <p className="text-gray-500">No available times.</p>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>
