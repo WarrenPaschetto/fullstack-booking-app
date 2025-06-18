@@ -94,6 +94,15 @@ func TestListAllFreeSlotsHandler(t *testing.T) {
 			wantErrContains: "Could not get user ID",
 		},
 		{
+			name:            "Invalid provider ID format",
+			query:           "?start=" + start.Format(time.RFC3339) + "&end=" + end.Format(time.RFC3339) + "&provider=not-a-uuid",
+			injectUser:      true,
+			mockSlots:       nil,
+			mockErr:         nil,
+			wantStatus:      http.StatusBadRequest,
+			wantErrContains: "Invalid provider ID",
+		},
+		{
 			name:            "DB error",
 			query:           "?start=" + start.Format(time.RFC3339) + "&end=" + end.Format(time.RFC3339),
 			injectUser:      true,
