@@ -63,8 +63,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid user ID format", err)
 			return
 		}
-		role, _ := claims["role"].(string)
-		isAdmin := (role == "admin")
+		UserRole, _ := claims["user_role"].(string)
+		isAdmin := (UserRole == "admin")
 
 		ctx := context.WithValue(r.Context(), UserIDKey, userUUID)
 		ctx = context.WithValue(ctx, IsAdminKey, isAdmin)

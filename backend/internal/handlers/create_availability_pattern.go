@@ -6,19 +6,17 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/db"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/middleware"
 	"github.com/WarrenPaschetto/fullstack-booking-app/backend/internal/utils"
 	"github.com/google/uuid"
 )
 
-type AvailabilityPatternCreator interface {
-	CreateAvailabilityPattern(ctx context.Context, arg db.CreateAvailabilityPatternParams) error
+type AvailabilityPatternService interface {
+	CreatePatternAndSlots(ctx context.Context, providerID uuid.UUID, dayOfWeek int32, start, end time.Time) error
 }
 
-func CreateAvailabilityPatternHandler(q AvailabilityPatternCreator) http.HandlerFunc {
+func CreateAvailabilityPatternHandler(svc AvailabilityPatternService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		if !middleware.IsAdminFromContext(r.Context()) {
 			utils.RespondWithError(w, http.StatusForbidden, "Forbidden", nil)
 			return
@@ -33,15 +31,12 @@ func CreateAvailabilityPatternHandler(q AvailabilityPatternCreator) http.Handler
 			utils.RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 			return
 		}
-
 		if req.DayOfWeek < 0 || req.DayOfWeek > 6 {
-			utils.RespondWithError(w, http.StatusBadRequest,
-				"day_of_week must be 0 (Sunday) through 6 (Saturday)", nil)
+			utils.RespondWithError(w, http.StatusBadRequest, "day_of_week must be 0–6", nil)
 			return
 		}
 		if !req.EndTime.After(req.StartTime) {
-			utils.RespondWithError(w, http.StatusBadRequest,
-				"end_time must be after start_time", nil)
+			utils.RespondWithError(w, http.StatusBadRequest, "end_time must be after start_time", nil)
 			return
 		}
 
@@ -51,31 +46,14 @@ func CreateAvailabilityPatternHandler(q AvailabilityPatternCreator) http.Handler
 			return
 		}
 
-		arg := db.CreateAvailabilityPatternParams{
-			ID:         uuid.New(),
-			ProviderID: providerID,
-			DayOfWeek:  req.DayOfWeek,
-			StartTime:  req.StartTime,
-			EndTime:    req.EndTime,
-		}
-
-		if err := q.CreateAvailabilityPattern(r.Context(), arg); err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to create availability pattern", err)
+		err := svc.CreatePatternAndSlots(r.Context(), providerID, req.DayOfWeek, req.StartTime, req.EndTime)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create pattern and slots", err)
 			return
 		}
 
-		resp := struct {
-			ID        uuid.UUID `json:"id"`
-			DayOfWeek int32     `json:"day_of_week"`
-			StartTime time.Time `json:"start_time"`
-			EndTime   time.Time `json:"end_time"`
-		}{
-			ID:        arg.ID,
-			DayOfWeek: req.DayOfWeek,
-			StartTime: req.StartTime,
-			EndTime:   req.EndTime,
-		}
-		utils.RespondWithJSON(w, http.StatusCreated, resp)
-
+		utils.RespondWithJSON(w, http.StatusCreated, map[string]string{
+			"message": "Availability pattern and slots created successfully",
+		})
 	}
 }
