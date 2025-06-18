@@ -30,7 +30,7 @@ func main() {
 	queries := db.New(dbConn)
 	bookingSvc := service.NewBookingService(queries)
 	h := handlers.NewHandler(bookingSvc)
-
+	availabilitySvc := service.NewAvailabilityService(queries)
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/register", handlers.RegisterHandler(queries)).Methods("POST")
@@ -50,7 +50,7 @@ func main() {
 
 	admins.Handle("/bookings/all", h.ListAllBookingsHandler()).Methods("GET")
 	admins.Handle("/users/all", handlers.ListAllUsersHandler(queries)).Methods("GET")
-	admins.Handle("/avail-pattern/create", handlers.CreateAvailabilityPatternHandler(queries)).Methods("POST")
+	admins.Handle("/avail-pattern/create", handlers.CreateAvailabilityPatternHandler(availabilitySvc)).Methods("POST")
 
 	handlerWithCORS := middleware.CORS(r)
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -143,6 +144,7 @@ func LoginHandler(q userQuerier) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusUnauthorized, "Invalid credentials", err)
 			return
 		}
+		fmt.Println("Login user:", user.Email, "with role:", user.UserRole)
 
 		err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 		if err != nil {
@@ -157,8 +159,8 @@ func LoginHandler(q userQuerier) http.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub":       user.ID,
-			"role":      user.UserRole,
+			"sub":       user.ID.String(),
+			"user_role": user.UserRole,
 			"firstName": user.FirstName,
 			"iat":       jwt.NewNumericDate(time.Now()),
 			"exp":       jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),

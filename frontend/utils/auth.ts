@@ -21,7 +21,7 @@ export function clearToken() {
 
 export interface DecodedJWT {
     sub: string;
-    role: "user" | "admin";
+    user_role: "user" | "admin";
     firstName: string;
     exp: number;
     iat: number;
@@ -46,5 +46,5 @@ export function isAuthenticated(): boolean {
 
 export function userRole(): "user" | "admin" | null {
     const decoded = getDecodedToken();
-    return decoded?.role || null;
+    return decoded?.user_role || null;
 }

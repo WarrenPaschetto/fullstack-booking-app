@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS availability (
 CREATE OR REPLACE FUNCTION check_availability_provider_is_admin()
   RETURNS trigger AS $check_avail$
 BEGIN
-  IF (SELECT role FROM users WHERE id = NEW.provider_id) IS DISTINCT FROM 'admin' THEN
+  IF (SELECT user_role FROM users WHERE id = NEW.provider_id) IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'provider is not an admin';
   END IF;
   RETURN NEW;
