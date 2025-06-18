@@ -44,12 +44,22 @@ export default function UserCalendar() {
     //–– FETCH AVAILABILITY WHEN DAY SELECTED ––
     useEffect(() => {
         if (!selectedDate) return;
+        const provider = "f2480f96-e1a3-4e33-9f26-b90910680bec"
         const iso = selectedDate.toISOString().slice(0, 10);
-        fetch(`/api/availabilities/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z`)
+        fetch(`/api/availabilities/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z&provider=${provider}`)
             .then((r) => r.json())
             .then((data) => {
-                // assuming your API returns { times: string[] }
-                setAvailableTimes(data.times || []);
+                const formatter = new Intl.DateTimeFormat("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                });
+
+                const times = data.map((slot: any) =>
+                    formatter.format(new Date(slot.start_time))
+                );
+
+                setAvailableTimes(times);
             })
             .catch(() => setAvailableTimes([]));
     }, [selectedDate]);
