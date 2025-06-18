@@ -168,13 +168,18 @@ export default function UserCalendar() {
                                                             );
 
                                                             alert("Booking confirmed!");
-                                                        } catch (err: any) {
-                                                            console.error(err);
-                                                            alert(err.message);
+                                                        } catch (err) {
+                                                            if (err instanceof Error) {
+                                                                console.error(err.message);
+                                                                alert(err.message);
+                                                            } else {
+                                                                console.error("Unknown error", err);
+                                                                alert("An unknown error occurred.");
+                                                            }
                                                         }
                                                     }
                                                 }}
-                                                className={`p-2 rounded ${!slot.displayTime ? "invisible" : "hover:bg-blue-100"}`}
+                                                className={`p-2 rounded ${selectedTime === slot.displayTime ? "invisible" : "hover:bg-blue-100"}`}
                                             >
                                                 {slot.displayTime}
                                             </button>
