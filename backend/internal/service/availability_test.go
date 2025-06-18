@@ -30,7 +30,7 @@ func (m *mockAvailabilityQueries) CreateAvailability(ctx context.Context, arg db
 func TestCreatePatternAndSlots(t *testing.T) {
 	providerID := uuid.New()
 	start := time.Date(2025, 6, 1, 9, 0, 0, 0, time.UTC)
-	end := start.AddDate(0, 0, 7)
+	end := time.Date(2025, 6, 24, 17, 0, 0, 0, time.UTC)
 
 	t.Run("happy path", func(t *testing.T) {
 		mock := &mockAvailabilityQueries{}
