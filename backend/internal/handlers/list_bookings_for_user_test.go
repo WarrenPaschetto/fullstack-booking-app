@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -76,6 +77,15 @@ func TestListBookingsForUserHandler(t *testing.T) {
 				return fakeBookings, nil
 			},
 			expectStatus:   http.StatusUnauthorized,
+			expectResponse: nil,
+		},
+		{
+			name:      "List error",
+			ctxUserID: userID,
+			mockList: func(ctx context.Context, id uuid.UUID) ([]db.Booking, error) {
+				return nil, fmt.Errorf("DB error")
+			},
+			expectStatus:   http.StatusInternalServerError,
 			expectResponse: nil,
 		},
 	}
