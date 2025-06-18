@@ -35,6 +35,7 @@ func main() {
 
 	r.HandleFunc("/api/register", handlers.RegisterHandler(queries)).Methods("POST")
 	r.HandleFunc("/api/login", handlers.LoginHandler(queries)).Methods("POST")
+	r.HandleFunc("/api/availabilities/free", handlers.ListAllFreeSlotsHandler(queries)).Methods("GET")
 
 	bookings := r.PathPrefix("/api/bookings").Subrouter()
 	bookings.Use(middleware.AuthMiddleware)
@@ -52,8 +53,7 @@ func main() {
 	admins.Handle("/users/all", handlers.ListAllUsersHandler(queries)).Methods("GET")
 	admins.Handle("/avail-pattern/create", handlers.CreateAvailabilityPatternHandler(availabilitySvc)).Methods("POST")
 
-	handlerWithCORS := middleware.CORS(r)
-
+	// Logging middleware
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -62,6 +62,16 @@ func main() {
 		})
 	})
 
+	// Add explicit 404 logger
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("404 Not Found: %s", r.URL.Path)
+		http.NotFound(w, r)
+	})
+
+	// Wrap router in CORS AFTER all routes
+	handlerWithCORS := middleware.CORS(r)
+
+	// Serve
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

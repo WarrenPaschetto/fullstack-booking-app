@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -23,6 +24,7 @@ type listResponse struct {
 
 func ListAllFreeSlotsHandler(l FreeSlotsLister) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println(">>> Handler: ListAllFreeSlotsHandler hit")
 
 		startStr := r.URL.Query().Get("start")
 		endStr := r.URL.Query().Get("end")
@@ -42,11 +44,26 @@ func ListAllFreeSlotsHandler(l FreeSlotsLister) http.HandlerFunc {
 			return
 		}
 
-		providerID, ok := middleware.UserIDFromContext(r.Context())
-		if !ok {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Could not get user ID", nil)
-			return
+		providerStr := r.URL.Query().Get("provider")
+		var providerID uuid.UUID
+		if providerStr != "" {
+			id, err := uuid.Parse(providerStr)
+			if err != nil {
+				utils.RespondWithError(w, http.StatusBadRequest, "Invalid provider ID", err)
+				return
+			}
+			log.Printf("✓ Parsed provider UUID: %s", id)
+			providerID = id
+		} else {
+			var ok bool
+			providerID, ok = middleware.UserIDFromContext(r.Context())
+			if !ok {
+				utils.RespondWithError(w, http.StatusInternalServerError, "Could not get user ID", nil)
+				return
+			}
 		}
+		log.Printf("start=%s, end=%s, provider=%s", startStr, endStr, providerStr)
+		log.Printf("Fetching slots for provider %s", providerID.String())
 
 		freeSlots, err := l.ListAllFreeSlots(r.Context(), db.ListAllFreeSlotsParams{
 			ProviderID: providerID,
@@ -57,6 +74,8 @@ func ListAllFreeSlotsHandler(l FreeSlotsLister) http.HandlerFunc {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to retrieve available time slots", err)
 			return
 		}
+
+		log.Printf("✓ Retrieved %d free slots", len(freeSlots))
 
 		resp := make([]listResponse, 0, len(freeSlots))
 		for _, slot := range freeSlots {
