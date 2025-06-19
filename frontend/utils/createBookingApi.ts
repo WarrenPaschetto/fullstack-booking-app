@@ -11,6 +11,7 @@ export async function createBooking(params: {
             "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
+            id: params.id,
             appointment_start: params.appointmentStart.toISOString(),
             duration_minutes: params.durationMinutes,
         }),

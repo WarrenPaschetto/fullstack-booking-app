@@ -145,6 +145,7 @@ export default function UserCalendar() {
                                             <button
                                                 key={slot.id}
                                                 onClick={async () => {
+                                                    console.log("Slot ID:", slot.id);
                                                     const confirmBooking = window.confirm(`Are you sure you want to book ${slot.displayTime}?`);
                                                     if (confirmBooking) {
 
@@ -157,7 +158,6 @@ export default function UserCalendar() {
                                                                 alert("Missing auth token");
                                                                 return;
                                                             }
-
                                                             await createBooking(
                                                                 {
                                                                     id: slot.id,

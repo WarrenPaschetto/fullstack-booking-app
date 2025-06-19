@@ -11,6 +11,7 @@ import (
 )
 
 type BookingRequest struct {
+	ID               string    `json:"id"`
 	AppointmentStart time.Time `json:"appointment_start"`
 	DurationMinutes  int32     `json:"duration_minutes"`
 }
@@ -31,7 +32,11 @@ func (h *Handler) CreateBookingHandler() http.HandlerFunc {
 			return
 		}
 
-		id := uuid.New()
+		id, err := uuid.Parse(req.ID)
+		if err != nil {
+			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to parse ID", err)
+			return
+		}
 		booking, err := h.BookingService.CreateBooking(r.Context(), id, userID, req.AppointmentStart, req.DurationMinutes)
 		if err != nil {
 			utils.RespondWithError(w, http.StatusInternalServerError, "Failed to create booking", err)
