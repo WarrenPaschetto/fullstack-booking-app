@@ -18,10 +18,18 @@ import (
 func TestCreateBookingHandler(t *testing.T) {
 	userID := uuid.New()
 	validBody := BookingRequest{
+		ID:               uuid.NewString(),
 		AppointmentStart: time.Now().Add(time.Hour),
 		DurationMinutes:  60,
 	}
 	jsonBody, _ := json.Marshal(validBody)
+
+	invalidBody := BookingRequest{
+		ID:               "12345",
+		AppointmentStart: time.Now().Add(time.Hour),
+		DurationMinutes:  60,
+	}
+	invalidJsonBody, _ := json.Marshal(invalidBody)
 
 	tests := []struct {
 		name         string
@@ -56,6 +64,12 @@ func TestCreateBookingHandler(t *testing.T) {
 			expectStatus: http.StatusBadRequest,
 		},
 		{
+			name:         "Not a valid uuid in request body",
+			ctxUserID:    userID,
+			body:         invalidJsonBody,
+			expectStatus: http.StatusBadRequest,
+		},
+		{
 			name:      "Overlapping booking",
 			ctxUserID: userID,
 			body:      jsonBody,
@@ -78,7 +92,7 @@ func TestCreateBookingHandler(t *testing.T) {
 			h := &Handler{BookingService: bookingSvc}
 			handler := h.CreateBookingHandler()
 
-			req := httptest.NewRequest(http.MethodPost, "/api//bookings", bytes.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, "/api//bookings/create", bytes.NewReader(tt.body))
 			if tt.ctxUserID != nil {
 				req = req.WithContext(context.WithValue(req.Context(), middleware.UserIDKey, tt.ctxUserID))
 			}
