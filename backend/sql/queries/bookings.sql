@@ -1,12 +1,13 @@
 -- name: CreateBooking :one
-INSERT INTO bookings (id, created_at, updated_at, appointment_start, duration_minutes, user_id)
+INSERT INTO bookings (id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id)
 VALUES (
     $1,
     now(),
     now(),
     $2,
     $3,
-    $4
+    $4,
+    $5
 )
 RETURNING *;
 

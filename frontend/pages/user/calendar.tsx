@@ -3,6 +3,8 @@ import Layout from "../../components/Layout";
 import dynamic from "next/dynamic";
 import { useRequireAuth } from "../../utils/useRequireAuth";
 import { createBooking } from "@/utils/createBookingApi";
+import { FormattedSlot, listFreeSlots } from "@/utils/listFreeSlots";
+
 
 const Navbar = dynamic(() => import("../../components/Navbar"), {
     ssr: false,
@@ -48,30 +50,10 @@ export default function UserCalendar() {
     //–– FETCH AVAILABILITY WHEN DAY SELECTED ––
     useEffect(() => {
         if (!selectedDate) return;
+        const provider = "f2480f96-e1a3-4e33-9f26-b90910680bec";
 
-        interface Slot {
-            id: string;
-            start_time: string;
-            end_time: string;
-        }
-
-        const provider = "f2480f96-e1a3-4e33-9f26-b90910680bec"
-        const iso = selectedDate.toISOString().slice(0, 10);
-        fetch(`/api/availabilities/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z&provider=${provider}`)
-            .then((r) => r.json())
-            .then((data: Slot[]) => {
-                const formatter = new Intl.DateTimeFormat("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                });
-
-                const formatted = data.map((slot) => ({
-                    id: slot.id,
-                    displayTime: formatter.format(new Date(slot.start_time)),
-                    startTime: slot.start_time,
-                }));
-
+        listFreeSlots(selectedDate, provider)
+            .then((formatted: FormattedSlot[]) => {
                 setAvailableTimes(formatted);
             })
             .catch(() => setAvailableTimes([]));
@@ -130,67 +112,67 @@ export default function UserCalendar() {
                 {/* Availability Panel */}
                 {selectedDate && (
                     <div className="mt-6 text-left">
-                        <table className="min-w-2/3 bg-white">
-                            <thead className="border-b">
-                                <tr>
-                                    <h2 className="text-2xl font-semibold mb-2">
-                                        Times on {selectedDate.toLocaleDateString()}
-                                    </h2>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {availableTimes.length > 0 ? (
-                                    <div className="grid grid-cols-7 gap-4 mt-4">
-                                        {availableTimes.map((slot) => (
-                                            <button
-                                                key={slot.id}
-                                                onClick={async () => {
-                                                    console.log("Slot ID:", slot.id);
-                                                    const confirmBooking = window.confirm(`Are you sure you want to book ${slot.displayTime}?`);
-                                                    if (confirmBooking) {
+                        <h2 className="text-2xl font-semibold mb-2">
+                            Times on {selectedDate.toLocaleDateString()}
+                        </h2>
 
-                                                        setSelectedTime(slot.displayTime);
+                        {availableTimes.length > 0 ? (
+                            <div className="grid grid-cols-7 gap-4 mt-4">
+                                {availableTimes.map((slot) => (
+                                    <button
+                                        key={slot.id}
+                                        onClick={async () => {
+                                            const confirmBooking = window.confirm(
+                                                `Are you sure you want to book ${slot.displayTime}?`
+                                            );
+                                            if (confirmBooking) {
+                                                setSelectedTime(slot.displayTime);
 
-                                                        try {
-
-                                                            const token = localStorage.getItem("booking_app_token");
-                                                            if (!token) {
-                                                                alert("Missing auth token");
-                                                                return;
-                                                            }
-                                                            await createBooking(
-                                                                {
-                                                                    id: slot.id,
-                                                                    appointmentStart: new Date(slot.startTime),
-                                                                    durationMinutes: 60,
-                                                                },
-                                                                token
-                                                            );
-
-                                                            alert("Booking confirmed!");
-                                                        } catch (err) {
-                                                            if (err instanceof Error) {
-                                                                console.error(err.message);
-                                                                alert(err.message);
-                                                            } else {
-                                                                console.error("Unknown error", err);
-                                                                alert("An unknown error occurred.");
-                                                            }
-                                                        }
+                                                try {
+                                                    const token = localStorage.getItem("booking_app_token");
+                                                    if (!token) {
+                                                        alert("Missing auth token");
+                                                        return;
                                                     }
-                                                }}
-                                                className={`p-2 rounded ${selectedTime === slot.displayTime ? "invisible" : "hover:bg-blue-100"}`}
-                                            >
-                                                {slot.displayTime}
-                                            </button>
-                                        ))}
-                                    </div>
 
-                                ) : (
-                                    <p className="text-gray-500">No available times.</p>
-                                )}
-                            </tbody>
-                        </table>
+                                                    await createBooking(
+                                                        {
+                                                            id: slot.id,
+                                                            appointmentStart: new Date(slot.startTime),
+                                                            durationMinutes: 60,
+                                                        },
+                                                        token
+                                                    );
+
+                                                    alert("Booking confirmed!");
+
+                                                    const provider = "f2480f96-e1a3-4e33-9f26-b90910680bec";
+                                                    listFreeSlots(selectedDate, provider)
+                                                        .then((formatted) => setAvailableTimes(formatted))
+                                                        .catch(() => setAvailableTimes([]));
+                                                } catch (err) {
+                                                    if (err instanceof Error) {
+                                                        console.error(err.message);
+                                                        alert(err.message);
+                                                    } else {
+                                                        console.error("Unknown error", err);
+                                                        alert("An unknown error occurred.");
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                        className={`p-2 rounded ${selectedTime === slot.displayTime
+                                                ? "invisible"
+                                                : "hover:bg-blue-100"
+                                            }`}
+                                    >
+                                        {slot.displayTime}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500">No available times.</p>
+                        )}
                     </div>
                 )}
             </div>
