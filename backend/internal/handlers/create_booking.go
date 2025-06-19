@@ -34,7 +34,7 @@ func (h *Handler) CreateBookingHandler() http.HandlerFunc {
 
 		id, err := uuid.Parse(req.ID)
 		if err != nil {
-			utils.RespondWithError(w, http.StatusInternalServerError, "Unable to parse ID", err)
+			utils.RespondWithError(w, http.StatusBadRequest, "Unable to parse ID", err)
 			return
 		}
 		booking, err := h.BookingService.CreateBooking(r.Context(), id, userID, req.AppointmentStart, req.DurationMinutes)
