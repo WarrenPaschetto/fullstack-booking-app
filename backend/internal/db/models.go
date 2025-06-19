@@ -36,7 +36,7 @@ type Booking struct {
 	AppointmentStart time.Time
 	DurationMinutes  int32
 	UserID           uuid.UUID
-	SlotID           uuid.NullUUID
+	SlotID           uuid.UUID
 }
 
 type User struct {

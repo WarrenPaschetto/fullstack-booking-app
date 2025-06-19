@@ -13,14 +13,15 @@ import (
 )
 
 const createBooking = `-- name: CreateBooking :one
-INSERT INTO bookings (id, created_at, updated_at, appointment_start, duration_minutes, user_id)
+INSERT INTO bookings (id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id)
 VALUES (
     $1,
     now(),
     now(),
     $2,
     $3,
-    $4
+    $4,
+    $5
 )
 RETURNING id, created_at, updated_at, appointment_start, duration_minutes, user_id, slot_id
 `
@@ -30,6 +31,7 @@ type CreateBookingParams struct {
 	AppointmentStart time.Time
 	DurationMinutes  int32
 	UserID           uuid.UUID
+	SlotID           uuid.UUID
 }
 
 func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error) {
@@ -38,6 +40,7 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 		arg.AppointmentStart,
 		arg.DurationMinutes,
 		arg.UserID,
+		arg.SlotID,
 	)
 	var i Booking
 	err := row.Scan(

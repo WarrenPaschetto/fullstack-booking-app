@@ -63,6 +63,7 @@ func TestBookingService_CreateBooking(t *testing.T) {
 	now := time.Date(2025, 5, 14, 10, 0, 0, 0, time.UTC)
 	userID := uuid.New()
 	id := uuid.New()
+	slotID := uuid.New()
 
 	tests := []struct {
 		name       string
@@ -80,6 +81,7 @@ func TestBookingService_CreateBooking(t *testing.T) {
 				UserID:           userID,
 				AppointmentStart: now,
 				DurationMinutes:  30,
+				SlotID:           id,
 			},
 			wantErr: nil,
 		},
@@ -111,7 +113,7 @@ func TestBookingService_CreateBooking(t *testing.T) {
 			}
 
 			svc := NewBookingService(repo)
-			got, err := svc.CreateBooking(context.Background(), id, userID, now, 30)
+			got, err := svc.CreateBooking(context.Background(), id, userID, now, 30, slotID)
 
 			if tt.wantErr != nil {
 				if err == nil {

@@ -7,7 +7,7 @@ CREATE TABLE bookings (
     appointment_start TIMESTAMP NOT NULL,
     duration_minutes INTEGER NOT NULL,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    slot_id UUID REFERENCES availability(id) ON DELETE CASCADE
+    slot_id UUID NOT NULL REFERENCES availability(id) ON DELETE CASCADE
 );
 
 -- +goose Down
