@@ -1,6 +1,6 @@
 import React from 'react';
 import DatePicker from 'react-datepicker';
-import { formatAppointment } from '../utils/dateConversion';
+import { formatAppointment } from '../../utils/dateConversion';
 
 interface Props {
     selectedBooking: { AppointmentStart: string } | null

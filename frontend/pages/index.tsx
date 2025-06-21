@@ -14,7 +14,7 @@ export default function Home() {
             if (role === "admin") {
                 router.replace("/admin/dashboard");
             } else {
-                router.replace("/user/calendar");
+                router.replace("/user/dashboard");
             }
         }
         // otherwise, stay on this page

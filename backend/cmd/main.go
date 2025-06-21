@@ -40,13 +40,13 @@ func main() {
 	bookings := r.PathPrefix("/api/bookings").Subrouter()
 	bookings.Use(middleware.AuthMiddleware)
 
+	bookings.Handle("/user", h.ListBookingsForUserHandler()).Methods("GET")
 	bookings.Handle("/create", h.CreateBookingHandler()).Methods("POST")
-	//bookings.Handle("", h.ListBookingsForUserHandler()).Methods("GET")
 	//bookings.Handle("/{id}", h.GetBookingByIDHandler()).Methods("GET")
 	bookings.Handle("/{id}", h.RescheduleBookingHandler()).Methods("PUT")
 	bookings.Handle("/{id}", h.DeleteBookingHandler()).Methods("DELETE")
 
-	admins := r.PathPrefix("/api").Subrouter()
+	admins := r.PathPrefix("/api/admin").Subrouter()
 	admins.Use(middleware.AuthMiddleware)
 
 	admins.Handle("/bookings/all", h.ListAllBookingsHandler()).Methods("GET")
