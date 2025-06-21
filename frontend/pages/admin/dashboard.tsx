@@ -163,7 +163,7 @@ export default function AdminDashboard() {
                         />
                         {selectedUser && (
                             <div className="mt-4 space-x-4">
-                                <button className="px-4 py-2 bg-red-600 text-white rounded" onClick={handleDeleteBooking}>Delete</button>
+                                <button className="px-4 py-2 bg-red-600 text-white rounded" onClick={handleDeleteBooking}>Delete User</button>
                             </div>
                         )}
                     </div>
