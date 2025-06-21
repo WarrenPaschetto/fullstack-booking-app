@@ -23,13 +23,15 @@ export default function Navbar() {
 
     return (
         <nav className="w-full bg-blue-200 bg-opacity-30 shadow-md rounded-2xl py-3 px-6 flex flex-col lg:flex-row justify-between items-center">
-            <Link href="/" className="font-bold text-2xl sm:text-4xl text-blue-800 py-2 flex flex-row justify-items-start">
+            <Link href="/" className=" w-1/2 font-bold text-2xl sm:text-4xl text-blue-800 py-2 flex flex-row justify-items-start">
                 BookingApp Demo
             </Link>
+            <div className="w-3/4 font-bold text-lg text-gray-900 py-2 flex flex-row text-center">To login as an Admin, use Email: admin@example.com and Password: yourPassword123 <br />
+                To login as a user just register your name, a fake email, and easy password to remember</div>
 
             {auth ? (
                 <div className="flex items-center space-x-4">
-                    <span className="text-gray-600 font-semibold text-lg">Welcome {decoded?.firstName}</span>
+                    <span className="text-gray-600 font-semibold text-lg ml-10">Welcome {decoded?.firstName}</span>
                     <button
                         onClick={handleLogout}
                         className="text-red-500 hover:text-red-700 font-semibold text-lg"
@@ -38,7 +40,7 @@ export default function Navbar() {
                     </button>
                 </div>
             ) : (
-                <div className="space-x-8 flex flex-row justify-center lg:justify-end w-full">
+                <div className="space-x-8 flex flex-row justify-center lg:justify-end w-1/2">
                     <Link href="/login" className="font-bold text-blue-800 hover:text-white">
                         Log In
                     </Link>
