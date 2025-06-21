@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -31,11 +32,6 @@ func main() {
 	bookingSvc := service.NewBookingService(queries)
 	h := handlers.NewHandler(bookingSvc)
 	availabilitySvc := service.NewAvailabilityService(queries)
-	allowed := []string{
-		"https://fullstack-booking-app-hazel.vercel.app",
-		"https://fullstack-booking-1fftmhagy-warren-paschettos-projects.vercel.app",
-		"http://localhost:3000",
-	}
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/register", handlers.RegisterHandler(queries)).Methods("POST")
@@ -74,8 +70,16 @@ func main() {
 	})
 
 	// Wrap router in CORS AFTER all routes
-	handlerWithCORS := middleware.CORS(allowed)(r)
-
+	handlerWithCORS := middleware.CORS(
+		func(origin string) bool {
+			if origin == "https://fullstack-booking-app-hazel.vercel.app" ||
+				origin == "http://localhost:3000" {
+				return true
+			}
+			// Allow any vercel preview URL
+			return strings.HasSuffix(origin, ".vercel.app")
+		},
+	)(r)
 	// Serve
 	port := os.Getenv("PORT")
 	if port == "" {
