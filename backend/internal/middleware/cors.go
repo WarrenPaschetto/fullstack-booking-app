@@ -8,7 +8,8 @@ import (
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Allow frontend origin
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		//w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Origin", "https://fullstack-booking-app-hazel.vercel.app/")
 		// Allow methods frontend might use
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		// Allow the headers (e.g. Content-Type and Authorization for JWT)
