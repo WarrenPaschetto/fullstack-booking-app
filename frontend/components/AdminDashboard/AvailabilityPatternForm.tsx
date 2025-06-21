@@ -88,7 +88,7 @@ export default function AvailabilityPatternForm({
 
             <button
                 type="submit"
-                className="w-full text-blue-700 bg-blue-200 bg-opacity-20 hover:bg-opacity-30 py-2 
+                className="w-1/2 text-blue-700 bg-blue-200 bg-opacity-20 hover:bg-opacity-30 mt-7 py-2 
           rounded-lg font-semibold transition disabled:opacity-50 hover:bg-blue-400"
             >
                 Submit Changes
