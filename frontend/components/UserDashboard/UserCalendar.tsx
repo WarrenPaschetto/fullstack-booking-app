@@ -127,9 +127,9 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
                         Times on {selectedDate.toLocaleDateString()}
                     </h2>
 
-                    {availableTimes.length > 0 ? (
+                    {Array.isArray(availableTimes) && availableTimes.length > 0 ? (
                         <div className="grid grid-cols-4 gap-4 mt-4">
-                            {availableTimes?.map((slot) => (
+                            {availableTimes.map((slot) => (
                                 <button
                                     key={slot.id}
                                     onClick={async () => {
