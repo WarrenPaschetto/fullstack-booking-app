@@ -129,7 +129,7 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
 
                     {availableTimes.length > 0 ? (
                         <div className="grid grid-cols-4 gap-4 mt-4">
-                            {availableTimes.map((slot) => (
+                            {availableTimes?.map((slot) => (
                                 <button
                                     key={slot.id}
                                     onClick={async () => {
