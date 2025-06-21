@@ -122,7 +122,7 @@ export default function AdminDashboard() {
         <Layout>
             <Navbar />
             <div className="w-full max-w-5xl mx-auto mt-8">
-                <h2 className="text-2xl font-semibold mb-6">Admin Dashboard</h2>
+                <h2 className="text-2xl font-semibold mb-6 text-blue-200">Admin Dashboard</h2>
 
                 <AdminToolbar onSetView={setView} />
 
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
 
                 {view === "users" && (
                     <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl font-medium mb-4">Current Users</h3>
+                        <h3 className="text-xl font-semibold mb-4 text-blue-800">Current Users</h3>
                         {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
                         <UsersTable
                             users={allUsers}
@@ -163,8 +163,6 @@ export default function AdminDashboard() {
                         />
                         {selectedUser && (
                             <div className="mt-4 space-x-4">
-                                <button className="px-4 py-2 bg-green-600 text-white rounded" onClick={() => setView("update")}>Update</button>
-                                <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setView("update")}>Create Appt.</button>
                                 <button className="px-4 py-2 bg-red-600 text-white rounded" onClick={handleDeleteBooking}>Delete</button>
                             </div>
                         )}
@@ -173,7 +171,7 @@ export default function AdminDashboard() {
 
                 {view === "allBookings" && (
                     <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl font-medium mb-4">All Bookings</h3>
+                        <h3 className="text-xl font-semibold mb-4 text-blue-800">All Bookings</h3>
                         <BookingsTable
                             bookings={allBookings}
                             selectedBooking={selectedBooking}

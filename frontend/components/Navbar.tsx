@@ -24,15 +24,15 @@ export default function Navbar() {
     return (
         <nav className="w-full bg-blue-200 bg-opacity-30 shadow-md rounded-2xl py-3 px-6 flex flex-col lg:flex-row justify-between items-center">
             <Link href="/" className="font-bold text-2xl sm:text-4xl text-blue-800 py-2 flex flex-row justify-items-start">
-                BookingApp
+                BookingApp Demo
             </Link>
 
             {auth ? (
                 <div className="flex items-center space-x-4">
-                    <span className="text-gray-600">Welcome {decoded?.firstName}</span>
+                    <span className="text-gray-600 font-semibold text-lg">Welcome {decoded?.firstName}</span>
                     <button
                         onClick={handleLogout}
-                        className="text-red-500 hover:text-red-700 text-sm"
+                        className="text-red-500 hover:text-red-700 font-semibold text-lg"
                     >
                         Log out
                     </button>

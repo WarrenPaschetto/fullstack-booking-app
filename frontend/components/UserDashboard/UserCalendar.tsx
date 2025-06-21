@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import Layout from "../../components/Layout";
-import dynamic from "next/dynamic";
 import { useRequireAuth } from "../../utils/useRequireAuth";
 import { createBooking } from "@/utils/createBookingApi";
 import { FormattedSlot, listFreeSlots } from "@/utils/listFreeSlots";
-
-const Navbar = dynamic(() => import("../../components/Navbar"), {
-    ssr: false,
-});
 
 interface UserCalendarProps {
     onBack?: () => void;
@@ -81,129 +75,126 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
     }, [selectedDate]);
 
     return (
-        <Layout>
-            <Navbar />
-            <div className="w-full max-w-3xl mx-auto mt-20 p-6 bg-white rounded-lg shadow-md text-center">
-                <h1 className="text-3xl font-semibold text-blue-800 mb-4">Calendar</h1>
-                <p className="text-gray-900 font-medium">Pick a day to see availability</p>
+        <div className="w-full max-w-3xl mx-auto mt-20 p-6 bg-white rounded-lg shadow-md text-center">
+            <h1 className="text-3xl font-semibold text-blue-800 mb-4">Calendar</h1>
+            <p className="text-gray-900 font-medium">Pick a day to see availability</p>
 
-                {/* Month & Year Header */}
-                <div className="mt-4 text-blue-800 text-2xl px-2 font-semibold flex items-center justify-center gap-4">
-                    <button className="hover:text-green-600 text-2xl px-2" onClick={goToPreviousMonth}>&lt;</button>
-                    <span>{new Date(year, month).toLocaleString("default", { month: "long" })} {year}</span>
-                    <button className="hover:text-green-600 text-2xl px-2" onClick={goToNextMonth}>&gt;</button>
-                </div>
+            {/* Month & Year Header */}
+            <div className="mt-4 text-blue-800 text-2xl px-2 font-semibold flex items-center justify-center gap-4">
+                <button className="hover:text-green-600 text-2xl px-2" onClick={goToPreviousMonth}>&lt;</button>
+                <span>{new Date(year, month).toLocaleString("default", { month: "long" })} {year}</span>
+                <button className="hover:text-green-600 text-2xl px-2" onClick={goToNextMonth}>&gt;</button>
+            </div>
 
-                {/* Weekday Labels */}
-                <div className="grid grid-cols-7 mt-2 text-xl font-semibold text-blue-800">
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                        <div key={d}>{d}</div>
-                    ))}
-                </div>
+            {/* Weekday Labels */}
+            <div className="grid grid-cols-7 mt-2 text-xl font-semibold text-blue-800">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                    <div key={d}>{d}</div>
+                ))}
+            </div>
 
-                {/* Day Grid */}
-                <div className="grid grid-cols-7 gap-2 mt-2">
-                    {calendarDays.map((date, idx) => {
-                        const isToday = date?.toDateString() === new Date().toDateString();
-                        const isSelected =
-                            date &&
-                            selectedDate &&
-                            date.toDateString() === selectedDate.toDateString();
+            {/* Day Grid */}
+            <div className="grid grid-cols-7 gap-2 mt-2">
+                {calendarDays.map((date, idx) => {
+                    const isToday = date?.toDateString() === new Date().toDateString();
+                    const isSelected =
+                        date &&
+                        selectedDate &&
+                        date.toDateString() === selectedDate.toDateString();
 
-                        return (
-                            <button
-                                key={idx}
-                                disabled={!date}
-                                onClick={() => date && setSelectedDate(date)}
-                                className={`
+                    return (
+                        <button
+                            key={idx}
+                            disabled={!date}
+                            onClick={() => date && setSelectedDate(date)}
+                            className={`
                   p-2 rounded
                   ${!date ? "invisible" : "hover:bg-blue-100"}
                   ${isToday ? "bg-blue-200" : ""}
                   ${isSelected ? "bg-blue-400 text-white" : ""}
                 `}
-                            >
-                                {date?.getDate()}
-                            </button>
-                        );
-                    })}
-                </div>
+                        >
+                            {date?.getDate()}
+                        </button>
+                    );
+                })}
+            </div>
 
-                {/* Availability Panel */}
-                {selectedDate && (
-                    <div className="mt-6 text-left">
-                        <h2 className="text-2xl font-semibold text-blue-800 mb-2">
-                            Times on {selectedDate.toLocaleDateString()}
-                        </h2>
+            {/* Availability Panel */}
+            {selectedDate && (
+                <div className="mt-6 text-left">
+                    <h2 className="text-2xl font-semibold text-blue-800 mb-2">
+                        Times on {selectedDate.toLocaleDateString()}
+                    </h2>
 
-                        {availableTimes.length > 0 ? (
-                            <div className="grid grid-cols-4 gap-4 mt-4">
-                                {availableTimes.map((slot) => (
-                                    <button
-                                        key={slot.id}
-                                        onClick={async () => {
-                                            const confirmBooking = window.confirm(
-                                                `Are you sure you want to book ${slot.displayTime}?`
-                                            );
-                                            if (confirmBooking) {
-                                                setSelectedTime(slot.displayTime);
+                    {availableTimes.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-4 mt-4">
+                            {availableTimes.map((slot) => (
+                                <button
+                                    key={slot.id}
+                                    onClick={async () => {
+                                        const confirmBooking = window.confirm(
+                                            `Are you sure you want to book ${slot.displayTime}?`
+                                        );
+                                        if (confirmBooking) {
+                                            setSelectedTime(slot.displayTime);
 
-                                                try {
-                                                    const token = localStorage.getItem("booking_app_token");
-                                                    if (!token) {
-                                                        alert("Missing auth token");
-                                                        return;
-                                                    }
+                                            try {
+                                                const token = localStorage.getItem("booking_app_token");
+                                                if (!token) {
+                                                    alert("Missing auth token");
+                                                    return;
+                                                }
 
-                                                    await createBooking(
-                                                        {
-                                                            id: slot.id,
-                                                            appointmentStart: new Date(slot.startTime),
-                                                            durationMinutes: 60,
-                                                        },
-                                                        token
-                                                    );
+                                                await createBooking(
+                                                    {
+                                                        id: slot.id,
+                                                        appointmentStart: new Date(slot.startTime),
+                                                        durationMinutes: 60,
+                                                    },
+                                                    token
+                                                );
 
-                                                    alert("Booking confirmed!");
+                                                alert("Booking confirmed!");
 
-                                                    const provider = "f2480f96-e1a3-4e33-9f26-b90910680bec";
-                                                    listFreeSlots(selectedDate, provider)
-                                                        .then((formatted) => setAvailableTimes(formatted))
-                                                        .catch(() => setAvailableTimes([]));
-                                                } catch (err) {
-                                                    if (err instanceof Error) {
-                                                        console.error(err.message);
-                                                        alert(err.message);
-                                                    } else {
-                                                        console.error("Unknown error", err);
-                                                        alert("An unknown error occurred.");
-                                                    }
+                                                const provider = "f2480f96-e1a3-4e33-9f26-b90910680bec";
+                                                listFreeSlots(selectedDate, provider)
+                                                    .then((formatted) => setAvailableTimes(formatted))
+                                                    .catch(() => setAvailableTimes([]));
+                                            } catch (err) {
+                                                if (err instanceof Error) {
+                                                    console.error(err.message);
+                                                    alert(err.message);
+                                                } else {
+                                                    console.error("Unknown error", err);
+                                                    alert("An unknown error occurred.");
                                                 }
                                             }
-                                        }}
-                                        className={`p-2 rounded ${selectedTime === slot.displayTime
-                                            ? "invisible"
-                                            : "hover:bg-blue-100"
-                                            }`}
-                                    >
-                                        {slot.displayTime}
-                                    </button>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-gray-900">No available times.</p>
-                        )}
-                    </div>
-                )}
-                {onBack && (
-                    <button
-                        onClick={onBack}
-                        className="text-blue-800 underline mb-4 hover:text-blue-500"
-                    >
-                        ← Back to Dashboard
-                    </button>
-                )}
-            </div>
-        </Layout>
+                                        }
+                                    }}
+                                    className={`p-2 rounded ${selectedTime === slot.displayTime
+                                        ? "invisible"
+                                        : "hover:bg-blue-100"
+                                        }`}
+                                >
+                                    {slot.displayTime}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-900">No available times.</p>
+                    )}
+                </div>
+            )}
+            {onBack && (
+                <button
+                    onClick={onBack}
+                    className="text-blue-800 underline mb-4 hover:text-blue-500"
+                >
+                    ← Back to Dashboard
+                </button>
+            )}
+        </div>
     );
 }
 

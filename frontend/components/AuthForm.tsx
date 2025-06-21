@@ -127,7 +127,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                                 onChange={(e) => setFirstName(e.target.value)}
                                 className="
                   w-full
-                  px-3 py-2
+                  px-3 py-2 bg-white
                   rounded-lg
                   focus:outline-none focus:ring-2 focus:ring-blue-300
                   text-gray-900
@@ -143,7 +143,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                                 onChange={(e) => setLastName(e.target.value)}
                                 className="
                   w-full
-                  px-3 py-2
+                  px-3 py-2 bg-white
                   rounded-lg
                   focus:outline-none focus:ring-2 focus:ring-blue-300
                   text-gray-900
@@ -163,7 +163,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                         onChange={(e) => setEmail(e.target.value)}
                         className="
               w-full
-              px-3 py-2
+              px-3 py-2 bg-white
               rounded-lg
               focus:outline-none focus:ring-2 focus:ring-blue-300
               text-gray-900
@@ -181,7 +181,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                         onChange={(e) => setPassword(e.target.value)}
                         className="
               w-full
-              px-3 py-2
+              px-3 py-2 bg-white
               rounded-lg
               focus:outline-none focus:ring-2 focus:ring-blue-300
               text-gray-900
@@ -199,6 +199,7 @@ export default function AuthForm({ mode, onSuccess }: AuthFormProps) {
                     className="
             w-full
             text-blue-700
+            text-lg
             bg-blue-200 bg-opacity-20
             hover:bg-opacity-30
             py-2 rounded-lg

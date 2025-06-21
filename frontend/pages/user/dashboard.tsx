@@ -61,7 +61,7 @@ export default function UserDashboard() {
         <Layout>
             <Navbar />
             <div className="w-full max-w-5xl mx-auto mt-8">
-                <h2 className="text-2xl font-semibold mb-6">User Dashboard</h2>
+                <h2 className="text-2xl font-semibold mb-6 text-blue-200">User Dashboard</h2>
 
                 <UserToolbar onSetView={setView} />
 
@@ -73,7 +73,7 @@ export default function UserDashboard() {
 
                 {view === "userBookings" && (
                     <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl font-medium mb-4">All Bookings</h3>
+                        <h3 className="text-xl font-semibold mb-4 text-blue-800">All Bookings</h3>
                         <BookingsTable
                             bookings={allBookings}
                             selectedBooking={selectedBooking}
