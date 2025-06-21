@@ -12,7 +12,7 @@ export default function LoginPage() {
         if (isAuthenticated()) {
             // If already logged in, redirect
             const role = userRole();
-            router.replace(role === "admin" ? "/admin/dashboard" : "/user/calendar");
+            router.replace(role === "admin" ? "/admin/dashboard" : "/user/dashboard");
         }
     }, [router]);
 
@@ -22,7 +22,7 @@ export default function LoginPage() {
         if (role === "admin") {
             router.push("/admin/dashboard");
         } else {
-            router.push("/user/calendar");
+            router.push("/user/dashboard");
         }
     }
 

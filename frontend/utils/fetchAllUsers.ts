@@ -7,7 +7,7 @@ export interface User {
 }
 
 export async function fetchAllUsers(token: string): Promise<User[]> {
-    const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/all`, {
+    const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/users/all`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!resp.ok) {

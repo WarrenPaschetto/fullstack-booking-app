@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import { useRequireAuth } from "@/utils/useRequireAuth";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import UpdateBookingForm from "@/components/UpdateBookingForm";
+import UpdateBookingForm from "@/components/AdminDashboard/UpdateBookingForm";
 import { updateBooking } from "@/utils/updateBookingApi";
 import AvailabilityPatternForm from "@/components/AdminDashboard/AvailabilityPatternForm";
 import { availabilityPattern } from "@/utils/availPatternApi";
@@ -11,7 +11,7 @@ import { Booking, fetchAllBookings } from "@/utils/fetchAllBookings";
 import { fetchAllUsers, User } from "@/utils/fetchAllUsers";
 import { formatError } from "@/utils/formatError";
 import { deleteBookingById } from "@/utils/deleteBookingById";
-import BookingsTable from "@/components/AdminDashboard/BookingsTable";
+import BookingsTable from "@/components/BookingsTable";
 import UsersTable from "@/components/AdminDashboard/UsersTable";
 import AdminToolbar from "@/components/AdminDashboard/AdminTollbar";
 

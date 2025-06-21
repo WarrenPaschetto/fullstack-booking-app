@@ -5,7 +5,7 @@ export interface Booking {
 }
 
 export async function fetchAllBookings(token: string): Promise<Booking[]> {
-    const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/bookings/all`, {
+    const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/bookings/all`, {
         headers: { Authorization: `Bearer ${token}` },
     });
     if (!resp.ok) throw new Error("Failed to fetch bookings");

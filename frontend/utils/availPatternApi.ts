@@ -3,7 +3,7 @@ export async function availabilityPattern(params: {
     startTime: Date
     endTime: Date
 }, token: string) {
-    const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/avail-pattern/create`
+    const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/avail-pattern/create`
     const res = await fetch(url, {
         method: "POST",
         headers: {

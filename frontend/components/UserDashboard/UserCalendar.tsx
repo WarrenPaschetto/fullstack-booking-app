@@ -1,16 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Layout from "../../components/Layout";
 import dynamic from "next/dynamic";
 import { useRequireAuth } from "../../utils/useRequireAuth";
 import { createBooking } from "@/utils/createBookingApi";
 import { FormattedSlot, listFreeSlots } from "@/utils/listFreeSlots";
 
-
 const Navbar = dynamic(() => import("../../components/Navbar"), {
     ssr: false,
 });
 
-export default function UserCalendar() {
+interface UserCalendarProps {
+    onBack?: () => void;
+}
+
+const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
     useRequireAuth("user");
 
     const today = new Date();
@@ -162,8 +165,8 @@ export default function UserCalendar() {
                                             }
                                         }}
                                         className={`p-2 rounded ${selectedTime === slot.displayTime
-                                                ? "invisible"
-                                                : "hover:bg-blue-100"
+                                            ? "invisible"
+                                            : "hover:bg-blue-100"
                                             }`}
                                     >
                                         {slot.displayTime}
@@ -175,7 +178,17 @@ export default function UserCalendar() {
                         )}
                     </div>
                 )}
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className="text-blue-600 underline mb-4 hover:text-blue-800"
+                    >
+                        ← Back to Dashboard
+                    </button>
+                )}
             </div>
         </Layout>
     );
 }
+
+export default UserCalendar;
