@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import Layout from "../../components/Layout";
-import dynamic from "next/dynamic";
 import { useRequireAuth } from "../../utils/useRequireAuth";
 import { createBooking } from "@/utils/createBookingApi";
 import { FormattedSlot, listFreeSlots } from "@/utils/listFreeSlots";
-
-const Navbar = dynamic(() => import("../../components/Navbar"), {
-    ssr: false,
-});
 
 interface UserCalendarProps {
     onBack?: () => void;
@@ -81,7 +75,6 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
     }, [selectedDate]);
 
     return (
-        //<Layout>
         <div className="w-full max-w-3xl mx-auto mt-20 p-6 bg-white rounded-lg shadow-md text-center">
             <h1 className="text-3xl font-semibold text-blue-800 mb-4">Calendar</h1>
             <p className="text-gray-900 font-medium">Pick a day to see availability</p>
@@ -202,7 +195,6 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
                 </button>
             )}
         </div>
-        //</Layout>
     );
 }
 
