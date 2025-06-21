@@ -17,10 +17,9 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
     useRequireAuth("user");
 
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth(); // 0-indexed
+    const [month, setMonth] = useState(today.getMonth());
+    const [year, setYear] = useState(today.getFullYear());
 
-    //–– STATE ––
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [availableTimes, setAvailableTimes] = useState<
         { id: string; displayTime: string; startTime: string }[]
@@ -50,6 +49,25 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
         return [...blanks, ...days, ...trailing];
     }, [year, month, daysInMonth, startWeekday]);
 
+    // Helper functions to scroll through months
+    const goToPreviousMonth = () => {
+        if (month === 0) {
+            setMonth(11);
+            setYear((prev) => prev - 1);
+        } else {
+            setMonth((prev) => prev - 1);
+        }
+    };
+
+    const goToNextMonth = () => {
+        if (month === 11) {
+            setMonth(0);
+            setYear((prev) => prev + 1);
+        } else {
+            setMonth((prev) => prev + 1);
+        }
+    };
+
     //–– FETCH AVAILABILITY WHEN DAY SELECTED ––
     useEffect(() => {
         if (!selectedDate) return;
@@ -66,16 +84,18 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
         <Layout>
             <Navbar />
             <div className="w-full max-w-3xl mx-auto mt-20 p-6 bg-white rounded-lg shadow-md text-center">
-                <h1 className="text-3xl font-semibold mb-4">Calendar</h1>
-                <p className="text-gray-600">Pick a day to see availability</p>
+                <h1 className="text-3xl font-semibold text-blue-800 mb-4">Calendar</h1>
+                <p className="text-gray-900 font-medium">Pick a day to see availability</p>
 
                 {/* Month & Year Header */}
-                <div className="mt-4 text-xl font-semibold">
-                    {today.toLocaleString("default", { month: "long" })} {year}
+                <div className="mt-4 text-blue-800 text-2xl px-2 font-semibold flex items-center justify-center gap-4">
+                    <button className="hover:text-green-600 text-2xl px-2" onClick={goToPreviousMonth}>&lt;</button>
+                    <span>{new Date(year, month).toLocaleString("default", { month: "long" })} {year}</span>
+                    <button className="hover:text-green-600 text-2xl px-2" onClick={goToNextMonth}>&gt;</button>
                 </div>
 
                 {/* Weekday Labels */}
-                <div className="grid grid-cols-7 mt-2 text-sm font-medium text-gray-600">
+                <div className="grid grid-cols-7 mt-2 text-xl font-semibold text-blue-800">
                     {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                         <div key={d}>{d}</div>
                     ))}
@@ -84,11 +104,7 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
                 {/* Day Grid */}
                 <div className="grid grid-cols-7 gap-2 mt-2">
                     {calendarDays.map((date, idx) => {
-                        const isToday =
-                            date &&
-                            date.getFullYear() === today.getFullYear() &&
-                            date.getMonth() === today.getMonth() &&
-                            date.getDate() === today.getDate();
+                        const isToday = date?.toDateString() === new Date().toDateString();
                         const isSelected =
                             date &&
                             selectedDate &&
@@ -115,12 +131,12 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
                 {/* Availability Panel */}
                 {selectedDate && (
                     <div className="mt-6 text-left">
-                        <h2 className="text-2xl font-semibold mb-2">
+                        <h2 className="text-2xl font-semibold text-blue-800 mb-2">
                             Times on {selectedDate.toLocaleDateString()}
                         </h2>
 
                         {availableTimes.length > 0 ? (
-                            <div className="grid grid-cols-7 gap-4 mt-4">
+                            <div className="grid grid-cols-4 gap-4 mt-4">
                                 {availableTimes.map((slot) => (
                                     <button
                                         key={slot.id}
@@ -174,14 +190,14 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-gray-500">No available times.</p>
+                            <p className="text-gray-900">No available times.</p>
                         )}
                     </div>
                 )}
                 {onBack && (
                     <button
                         onClick={onBack}
-                        className="text-blue-600 underline mb-4 hover:text-blue-800"
+                        className="text-blue-800 underline mb-4 hover:text-blue-500"
                     >
                         ← Back to Dashboard
                     </button>
