@@ -8,7 +8,7 @@ import { Booking } from "@/utils/fetchAllBookings";
 import { fetchUserBookings } from "@/utils/fetchUserBookings";
 import { formatError } from "@/utils/formatError";
 import { useRequireAuth } from "@/utils/useRequireAuth";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 
 type View = "userBookings" | "book";
@@ -16,6 +16,7 @@ type View = "userBookings" | "book";
 export default function UserDashboard() {
     useRequireAuth("user");
 
+    const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined);
     const [view, setView] = useState<View>("userBookings");
     const [allBookings, setAllBookings] = useState<Booking[]>([]);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
@@ -28,20 +29,19 @@ export default function UserDashboard() {
         }
     }, [])
 
-    const fetchBookings = useCallback(async () => {
+    async function fetchBookings() {
         try {
             const data = await fetchUserBookings(token);
             setAllBookings(data);
         } catch (err) {
             setErrorMsg(formatError(err));
         }
-    }, [token]);
+    };
 
     useEffect(() => {
         if (!token) return;
-
         fetchBookings();
-    }, [token, fetchBookings]);
+    }, [token]);
 
     async function handleDeleteBooking() {
         if (!selectedBooking) return setErrorMsg("No booking selected");
@@ -65,6 +65,12 @@ export default function UserDashboard() {
 
                 <UserToolbar onSetView={setView} />
 
+                {errorMsg && (
+                    <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                        {errorMsg}
+                    </div>
+                )}
+
                 {view === "userBookings" && (
                     <div className="bg-white shadow-md rounded-lg p-6">
                         <h3 className="text-xl font-medium mb-4">All Bookings</h3>
@@ -84,11 +90,9 @@ export default function UserDashboard() {
                 {view === "book" && (
                     <UserCalendar onBack={() => setView("userBookings")} />
                 )}
+
             </div>
         </Layout>
     );
-}
-function setErrorMsg(arg0: string) {
-    throw new Error("Function not implemented.");
 }
 
