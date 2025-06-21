@@ -15,7 +15,7 @@ export async function listFreeSlots(selectedDate: Date, provider: string): Promi
 
     try {
         const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/availabilities/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z&provider=${provider}`
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/availabilities/free?start=${iso}T00:00:00Z&end=${iso}T23:59:59Z&provider=${provider}`
         );
 
         if (!res.ok) throw new Error("Failed to fetch slots");
