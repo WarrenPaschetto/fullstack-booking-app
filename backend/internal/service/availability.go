@@ -22,7 +22,12 @@ func NewAvailabilityService(store AvailabilityStore) *AvailabilityService {
 	return &AvailabilityService{store: store}
 }
 
-func (s *AvailabilityService) CreatePatternAndSlots(ctx context.Context, providerID uuid.UUID, dayOfWeek int32, start, end time.Time) error {
+func (s *AvailabilityService) CreatePatternAndSlots(
+	ctx context.Context,
+	providerID uuid.UUID,
+	dayOfWeek int32,
+	start, end time.Time,
+) error {
 	pattern := db.CreateAvailabilityPatternParams{
 		ID:         uuid.New(),
 		ProviderID: providerID,
@@ -30,49 +35,50 @@ func (s *AvailabilityService) CreatePatternAndSlots(ctx context.Context, provide
 		StartTime:  start,
 		EndTime:    end,
 	}
-
 	if err := s.store.CreateAvailabilityPattern(ctx, pattern); err != nil {
 		return fmt.Errorf("create pattern: %w", err)
 	}
 
-	slotParams := db.CreateAvailabilityParams{
-		ProviderID: providerID,
-		StartTime:  start,
-		EndTime:    end,
-	}
-
-	return generateSlots(ctx, slotParams, s.store)
+	return generateSlots(
+		ctx,
+		time.Weekday(dayOfWeek),
+		start,
+		end,
+		providerID,
+		s.store,
+	)
 }
 
-func generateSlots(ctx context.Context, arg db.CreateAvailabilityParams, q interface {
-	CreateAvailability(ctx context.Context, arg db.CreateAvailabilityParams) error
-}) error {
-	weekdayToMatch := arg.StartTime.Weekday()
-	startHour, startMin := arg.StartTime.Hour(), arg.StartTime.Minute()
-	endHour, endMin := arg.EndTime.Hour(), arg.EndTime.Minute()
+func generateSlots(
+	ctx context.Context,
+	dayToMatch time.Weekday,
+	startRange, endRange time.Time,
+	providerID uuid.UUID,
+	store AvailabilityStore,
+) error {
+	startHour, startMin := startRange.Hour(), startRange.Minute()
+	endHour, endMin := endRange.Hour(), endRange.Minute()
 
-	current := time.Date(arg.StartTime.Year(), arg.StartTime.Month(), arg.StartTime.Day(), 0, 0, 0, 0, arg.StartTime.Location())
+	current := time.Date(startRange.Year(), startRange.Month(), startRange.Day(), 0, 0, 0, 0, startRange.Location())
 
-	for !current.After(arg.EndTime) {
-		if current.Weekday() == weekdayToMatch {
-			start := time.Date(current.Year(), current.Month(), current.Day(), startHour, startMin, 0, 0, current.Location())
-			end := time.Date(current.Year(), current.Month(), current.Day(), endHour, endMin, 0, 0, current.Location())
+	for !current.After(endRange) {
+		if current.Weekday() == dayToMatch {
+			dayStart := time.Date(current.Year(), current.Month(), current.Day(), startHour, startMin, 0, 0, current.Location())
+			dayEnd := time.Date(current.Year(), current.Month(), current.Day(), endHour, endMin, 0, 0, current.Location())
 
-			for slotStart := start; !slotStart.Add(60 * time.Minute).After(end); slotStart = slotStart.Add(60 * time.Minute) {
-				slotEnd := slotStart.Add(60 * time.Minute)
-				err := q.CreateAvailability(ctx, db.CreateAvailabilityParams{
+			for slotStart := dayStart; !slotStart.Add(time.Hour).After(dayEnd); slotStart = slotStart.Add(time.Hour) {
+				slotEnd := slotStart.Add(time.Hour)
+				if err := store.CreateAvailability(ctx, db.CreateAvailabilityParams{
 					ID:         uuid.New(),
-					ProviderID: arg.ProviderID,
+					ProviderID: providerID,
 					StartTime:  slotStart,
 					EndTime:    slotEnd,
-				})
-				if err != nil {
-					return fmt.Errorf("create availability on %s: %w", slotStart.Format("2006-01-02 15:04"), err)
+				}); err != nil {
+					return fmt.Errorf("create availability on %s: %w", slotStart.Format("2006‑01‑02 15:04"), err)
 				}
 			}
 		}
 		current = current.AddDate(0, 0, 1)
 	}
-
 	return nil
 }
