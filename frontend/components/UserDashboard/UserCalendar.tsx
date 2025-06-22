@@ -106,7 +106,12 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
                         <button
                             key={idx}
                             disabled={!date}
-                            onClick={() => date && setSelectedDate(date)}
+                            onClick={() => {
+                                if (date) {
+                                    setSelectedDate(date);
+                                    setSelectedTime(""); // reset the selected time
+                                }
+                            }}
                             className={`
                   p-2 rounded
                   ${!date ? "invisible" : "hover:bg-blue-100"}
