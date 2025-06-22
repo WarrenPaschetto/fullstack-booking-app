@@ -32,7 +32,7 @@ export default function UserDashboard() {
     async function fetchBookings() {
         try {
             const data = await fetchUserBookings(token);
-            setAllBookings(data);
+            setAllBookings(data ?? []);
         } catch (err) {
             setErrorMsg(formatError(err));
         }

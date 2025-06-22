@@ -16,18 +16,26 @@ export default function BookingsTable({ bookings, selectedBooking, onSelectBooki
                 </tr>
             </thead>
             <tbody>
-                {bookings.map((b) => (
-                    <tr
-                        key={b.ID}
-                        className={`border-b border-b-blue-800 hover:bg-blue-100 ${selectedBooking?.ID === b.ID ? "bg-blue-300" : "bg-white"}`}
-                        onClick={() => onSelectBooking(b)}
-                    >
-                        <td className="px-6 py-4 text-md font-medium text-gray-900">
-                            {new Date(b.AppointmentStart).toLocaleString()}
+                {Array.isArray(bookings) && bookings.length > 0 ? (
+                    bookings.map((b) => (
+                        <tr
+                            key={b.ID}
+                            className={`border-b border-b-blue-800 hover:bg-blue-100 ${selectedBooking?.ID === b.ID ? "bg-blue-300" : "bg-white"}`}
+                            onClick={() => onSelectBooking(b)}
+                        >
+                            <td className="px-6 py-4 text-md font-medium text-gray-900">
+                                {new Date(b.AppointmentStart).toLocaleString()}
+                            </td>
+                            <td className="px-6 py-4 text-md font-medium text-gray-900">{b.DurationMinutes}</td>
+                        </tr>
+                    ))
+                ) : (
+                    <tr>
+                        <td colSpan={2} className="text-center text-gray-500">
+                            No bookings found.
                         </td>
-                        <td className="px-6 py-4 text-md font-medium text-gray-900">{b.DurationMinutes}</td>
                     </tr>
-                ))}
+                )}
             </tbody>
         </table>
     );
