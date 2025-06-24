@@ -11,10 +11,13 @@ A fullstack scheduling and booking system designed for service-based businesses.
 
 ## 🖼 Live Demo
 
-![Booking App Dashboard](./frontend/public/images/bookingAppDemo.png)
-![User Booking Page](./frontend/public/images/bookingAppDemo2.png)
-
 👉 [**Click here to view the live demo**](https://fullstack-booking-app-hazel.vercel.app/login)
+
+![Booking App Login](./frontend/public/images/demoLogin.png) 
+
+![User Booking Page](./frontend/public/images/demoCalendar.png)
+
+
 
 ## 🔧 Tech Stack
 
