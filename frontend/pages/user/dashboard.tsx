@@ -88,7 +88,12 @@ export default function UserDashboard() {
                 )}
 
                 {view === "book" && (
-                    <UserCalendar onBack={() => setView("userBookings")} />
+                    <UserCalendar
+                        onBack={() => setView("userBookings")}
+                        onBookingSuccess={async () => {
+                            await fetchBookings();
+                            setView("userBookings");
+                        }} />
                 )}
 
             </div>
