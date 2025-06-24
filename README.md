@@ -14,9 +14,14 @@ A fullstack scheduling and booking system designed for service-based businesses.
 👉 [**Click here to view the live demo**](https://fullstack-booking-app-hazel.vercel.app/login)
 
 To use app as a regular "user", just register a fake name, fake email, and password. Then log in under that email and password. To experience the app as an "admin", log in with the following:
+
+Email: 
 ```
-Email: admin@example.com
-Password: secretPassword123
+admin@example.com
+```
+Password: 
+```
+secretPassword123
 ```
 
 ![Booking App Login](./frontend/public/images/demoLogin.png) 
