@@ -73,7 +73,6 @@ fullstack-booking-app/
 
 ---
 
-## ⚙️ Setup Instructions
 
 ## 🛠️ Prerequisites
 
@@ -87,7 +86,7 @@ A fullstack scheduling and booking application built with:
 
 
 
-## ⚙️ Setup Supabase
+## ⚙️ Setup Instructions
 
 1. Log in to Supabase and create a new project.
 2. In the dashboard, go to Settings → Database → Connection string.
