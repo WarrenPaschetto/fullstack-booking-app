@@ -190,7 +190,7 @@ Open a new terminal and use curl to exercise your handlers:
 
 - **List bookings for user**
   ```
-  curl -i -X GET http://localhost:8080/api/bookings \
+  curl -i -X GET http://localhost:8080/api/bookings/user \
   -H "Authorization: Bearer $TOKEN" 
   ```
 
