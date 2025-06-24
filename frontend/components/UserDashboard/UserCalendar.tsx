@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRequireAuth } from "../../utils/useRequireAuth";
 import { createBooking } from "@/utils/createBookingApi";
 import { FormattedSlot, listFreeSlots } from "@/utils/listFreeSlots";
+import toast from "react-hot-toast";
 
 interface UserCalendarProps {
     onBack?: () => void;
+    onBookingSuccess?: () => void;
 }
 
-const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
+const UserCalendar: React.FC<UserCalendarProps> = ({ onBack, onBookingSuccess }) => {
     useRequireAuth("user");
 
     const today = new Date();
@@ -147,34 +149,41 @@ const UserCalendar: React.FC<UserCalendarProps> = ({ onBack }) => {
                                             try {
                                                 const token = localStorage.getItem("booking_app_token");
                                                 if (!token) {
-                                                    alert("Missing auth token");
+                                                    toast.error("Missing auth token");
                                                     return;
                                                 }
 
-                                                await createBooking(
+                                                await toast.promise(
+                                                    createBooking(
+                                                        {
+                                                            id: slot.id,
+                                                            appointmentStart: new Date(slot.startTime),
+                                                            durationMinutes: 60,
+                                                        },
+                                                        token
+                                                    ),
                                                     {
-                                                        id: slot.id,
-                                                        appointmentStart: new Date(slot.startTime),
-                                                        durationMinutes: 60,
-                                                    },
-                                                    token
+                                                        loading: "Booking...",
+                                                        success: "Booking confirmed!",
+                                                        error: (err) => err.message || "Booking failed.",
+                                                    }
                                                 );
 
-                                                alert("Booking confirmed!");
+                                                if (onBookingSuccess) {
+                                                    await onBookingSuccess(); // make this async if needed
+                                                }
 
+                                                // Refresh available times after booking
                                                 const provider = "f2480f96-e1a3-4e33-9f26-b90910680bec";
                                                 listFreeSlots(selectedDate, provider)
                                                     .then((formatted) => setAvailableTimes(formatted))
                                                     .catch(() => setAvailableTimes([]));
+
                                             } catch (err) {
-                                                if (err instanceof Error) {
-                                                    console.error(err.message);
-                                                    alert(err.message);
-                                                } else {
-                                                    console.error("Unknown error", err);
-                                                    alert("An unknown error occurred.");
-                                                }
+                                                toast.error("Something went wrong.");
+                                                console.error(err);
                                             }
+
                                         }
                                     }}
                                     className={`p-2 rounded ${selectedTime === slot.displayTime
