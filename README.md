@@ -129,30 +129,6 @@ A fullstack scheduling and booking application built with:
    ```
 
 
-
-## 🗄️ Database Migrations
-
-1. Go into the backend directory:
-   ```
-   cd backend
-   ```
-   
-2. In your shell, export your DATABASE_URL:
-   ```
-   export DATABASE_URL=postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
-   ```
-   
-3. Apply migrations:
-   ```
-   goose -dir sql/schema postgres "$DATABASE_URL" up
-   ```
-
-4. Verify the created tables:
-   ```
-   psql "&DATABASE_URL" -c '/dt'
-   ```
-
-
 ### Frontend Setup
 
 1. Navigate to the frontend:
