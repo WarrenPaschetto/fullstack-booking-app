@@ -11,7 +11,7 @@ export default function RegisterPage() {
     useEffect(() => {
         if (isAuthenticated()) {
             const role = userRole();
-            router.replace(role === "admin" ? "/admin/dashboard" : "/user/calendar");
+            router.replace(role === "admin" ? "/admin/dashboard" : "/user/dashboard");
         }
     }, [router]);
 
@@ -21,7 +21,7 @@ export default function RegisterPage() {
         if (role === "admin") {
             router.push("/admin/dashboard");
         } else {
-            router.push("/user/calendar");
+            router.push("/user/dashboard");
         }
     }
 
