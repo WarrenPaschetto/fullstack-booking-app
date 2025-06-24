@@ -7,27 +7,63 @@
 
 # Fullstack Booking App
 
-A fullstack scheduling and booking application built with:
+A fullstack scheduling and booking system designed for service-based businesses. I built this project as a capstone project for a backend course I completed with Boot.dev. The frontend I built for the live demo version that currently only demonstarates some of the functionality of the backend. Built with Go, Supabase, and Next.js, this monorepo project allows users to view available time slots, book appointments, and manage their bookings through a sleek and responsive UI.
 
-- **Go** for the backend API
-- **Supabase (PostgreSQL-powered )** for the database
-- **Next.js + Tailwind CSS** for the frontend
-- **Monorepo** structure (frontend and backend together)
-- **CI/CD** with GitHub Actions
-- **Codecov** for coverage reports of testing
+## 🖼 Live Demo
+
+![Booking App Dashboard](./frontend/public/images/bookingAppDemo.png)
+![User Booking Page](./frontend/public/images/bookingAppDemo2.png)
+
+👉 [**Click here to view the live demo**](https://fullstack-booking-app-hazel.vercel.app/login)
+
+## 🔧 Tech Stack
+
+- **Frontend**: [Next.js](https://nextjs.org/) + [Tailwind CSS](https://tailwindcss.com/)
+- **Backend**: [Go](https://golang.org/) (REST API)
+- **Database**: [Supabase](https://supabase.com/) (PostgreSQL)
+- **CI/CD**: GitHub Actions
+- **Testing & Coverage for Backend**: Codecov + Go test suite
+- **Monorepo**: Both frontend and backend are in one project
 
 ---
 
+## 🚀 Features
 
-# The Backend
+- User registration and JWT-based authentication
+- Admin and user dashboards
+- Provider availability patterns
+- User-selectable time slots
+- Live calendar with monthly navigation
+- Conflict-free appointment creation
+- Reschedule and delete functionality
+- Clean service-layered Go backend
 
+---
+
+## 🧠 Project Structure
+
+```bash
+fullstack-booking-app/
+├── backend/            # Go API
+│   ├── cmd/            # main.go server entrypoint
+│   ├── internal/       # handlers, services, middleware, db
+│   └── sql/            # Goose migrations
+├── frontend/           # Next.js UI
+│   ├── components/     # React components (Calendar, Toolbar, etc)
+│   ├── pages/          # Next.js routes
+│   └── utils/          # Fetchers and helpers
+```
+
+---
+
+## ⚙️ Setup Instructions
 
 ## 🛠️ Prerequisites
 
 A fullstack scheduling and booking application built with:
 
 - Go 1.18+ (https://golang.org/dl)
-- PostgreSQL (for the psql CLI)
+- PostgreSQL (CLI access)
 - Goose CLI (https://github.com/pressly/goose)
 - A Supabase account (https://supabase.com)
 
@@ -39,38 +75,58 @@ A fullstack scheduling and booking application built with:
 1. Log in to Supabase and create a new project.
 2. In the dashboard, go to Settings → Database → Connection string.
 3. Copy the Connection string (libpq) URL, for example:
-```
-postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
-```
+   ```
+   postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
+   ```
+4. Clone the repo:
+   ```bash
+   git clone https://github.com/WarrenPaschetto/fullstack-booking-app.git
+   cd fullstack-booking-app/backend
+   ```
+5. Create `.env` in `/backend`:
+   ```env
+   DATABASE_URL=postgresql://...    # Your Supabase connection string
+   JWT_SECRET=supersecretvalue
+   PORT=8080
+   ```
+6. Install the Goose CLI for managing migrations:
 
+   ```
+   # via Go modules
+   go install github.com/pressly/goose/v3/cmd/goose@latest
 
-## 🌐 Environment Variables
+   # or on macOS using Homebrew
+   brew install goose
+   ```
+   Verify installation:
+   ```
+   goose --version
+   ```
+7. Run migrations:
+   Go into the backend directory:
+   ```
+   cd backend
+   ```
+   
+   In your shell, export your DATABASE_URL:
+   ```
+   export DATABASE_URL=postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
+   ```
+   
+   Apply migrations:
+   ```
+   goose -dir sql/schema postgres "$DATABASE_URL" up
+   ```
 
-In the backend/ directory, create a file named .env with:
-
-```
-DATABASE_URL=postgresql://postgres:<PASSWORD>@db.<project>.supabase.co:5432/postgres?sslmode=require
-PORT=8080
-JWT_SECRET=<your_jwt_secret_here>  # optional, for JWT auth
-```
-
-
-
-## 🪿 Install Goose
-
-Install the Goose CLI for managing migrations:
-
-```
-# via Go modules
-go install github.com/pressly/goose/v3/cmd/goose@latest
-
-# or on macOS using Homebrew
-brew install goose
-```
-Verify installation:
-```
-goose --version
-```
+   Verify the created tables:
+   ```
+   psql "&DATABASE_URL" -c '/dt'
+   ```
+8. Start the server:
+   ```bash
+   go mod tidy
+   go run ./cmd/main.go
+   ```
 
 
 
@@ -97,26 +153,36 @@ goose --version
    ```
 
 
+### Frontend Setup
 
-## 🏃‍♂️ Run the Application
+1. Navigate to the frontend:
+   ```bash
+   cd ../frontend
+   npm install
+   ```
+2. Create `.env.local`:
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:8080/api
+   ```
+3. Run the app:
+   ```bash
+   npm run dev
+   ```
 
-1. Fetch dependencies and run the server:
-   ```
-   go mod tidy
-   go run ./cmd/main.go
-   ```
-
-2. You should see:
-   ```
-   ✅ Connected to Supabase Postgres
-   Listening on :8080
-   ```
-
+---
 
 
 ## 🧪 Testing Endpoints
 
 Open a new terminal and use curl to exercise your handlers:
+
+- **Register a new admin**
+  ```
+  curl -i -X POST http://localhost:8080/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"first_name":"Robert","last_name":"Pearl","email":"admin1@example.com","password":"passwordSecret", "user_role":"admin"}'
+  ```
+
 - **Register a new user**
   ```
   curl -i -X POST http://localhost:8080/api/register \
@@ -170,7 +236,13 @@ Open a new terminal and use curl to exercise your handlers:
 
 ---
 
+## 🧼 CI/CD & Testing
+
+- **GitHub Actions**: Auto test and lint on push
+- **Codecov**: Monitors backend code coverage
+
+---
 
 ## 📜 License
 
-MIT License
+MIT License Feel free to fork and customize for your business use case or play around with!
