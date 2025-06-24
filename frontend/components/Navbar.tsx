@@ -27,8 +27,8 @@ export default function Navbar() {
                 BookingApp Demo
             </Link>
             <div>
-                <Link href="https://github.com/WarrenPaschetto/fullstack-booking-app/tree/main" className=" w-1/2 font-bold text-xl sm:text-xl text-gray-800 hover:text-blue-800 py-2 flex flex-row justify-items-start">
-                    Click here for demo instructions
+                <Link href="https://github.com/WarrenPaschetto/fullstack-booking-app/tree/main" className=" w-full font-bold text-xl sm:text-xl text-black hover:text-blue-800 text-center py-2 flex flex-row justify-items-center">
+                    **Click here for demo instructions**
                 </Link>
             </div>
 
