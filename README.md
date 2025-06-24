@@ -17,6 +17,9 @@ A fullstack scheduling and booking system designed for service-based businesses.
 
 ![User Booking Page](./frontend/public/images/demoCalendar.png)
 
+> 💡 **Side Note:**  
+> There is no method to create a new admin from the frontend—this was intentional.  
+> If you really want to create an admin, use a `curl` statement in your terminal as shown in the **Testing Endpoints** section below.
 
 
 ## 🔧 Tech Stack
