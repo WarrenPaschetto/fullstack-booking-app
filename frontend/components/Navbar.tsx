@@ -26,8 +26,11 @@ export default function Navbar() {
             <Link href="/" className=" w-1/2 font-bold text-2xl sm:text-4xl text-blue-800 py-2 flex flex-row justify-items-start">
                 BookingApp Demo
             </Link>
-            <div className="w-3/4 font-bold text-lg text-gray-900 py-2 flex flex-row text-center">To login as an Admin, use Email: admin@example.com and Password: yourPassword123 <br />
-                To login as a user just register your name, a fake email, and easy password to remember</div>
+            <div>
+                <Link href="https://github.com/WarrenPaschetto/fullstack-booking-app/tree/main" className=" w-1/2 font-bold text-xl sm:text-xl text-gray-800 hover:text-blue-800 py-2 flex flex-row justify-items-start">
+                    Click here for demo instructions
+                </Link>
+            </div>
 
             {auth ? (
                 <div className="flex items-center space-x-4">
