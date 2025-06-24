@@ -21,7 +21,7 @@ admin@example.com
 ```
 Password: 
 ```
-secretPassword123
+yourPassword123
 ```
 
 ![Booking App Login](./frontend/public/images/demoLogin.png) 
