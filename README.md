@@ -154,7 +154,7 @@ A fullstack scheduling and booking application built with:
    ```
 2. Create `.env.local`:
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:8080/api
+   NEXT_PUBLIC_API_URL=http://localhost:8080
    ```
 3. Run the app:
    ```bash
