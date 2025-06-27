@@ -234,9 +234,7 @@ Open a new terminal and use curl to exercise your handlers:
 - **Codecov**: Monitors backend code coverage
 
 ---
-## Contributing
 
-If you'd like to contribute, please fork the repository and open a pull request to the `main` branch.
 ## 📜 License
 
 MIT License Feel free to fork and customize for your business use case or play around with!
