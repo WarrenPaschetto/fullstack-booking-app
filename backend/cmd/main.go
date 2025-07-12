@@ -43,7 +43,6 @@ func main() {
 
 	bookings.Handle("/user", h.ListBookingsForUserHandler()).Methods("GET")
 	bookings.Handle("/create", h.CreateBookingHandler()).Methods("POST")
-	//bookings.Handle("/{id}", h.GetBookingByIDHandler()).Methods("GET")
 	bookings.Handle("/{id}", h.RescheduleBookingHandler()).Methods("PUT")
 	bookings.Handle("/{id}", h.DeleteBookingHandler()).Methods("DELETE")
 
