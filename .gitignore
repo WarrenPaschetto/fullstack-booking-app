@@ -8,6 +8,7 @@
 *.log
 .vscode/
 .idea/
+node_modules
 
 # ---------------------
 # Frontend (Next.js)
