@@ -7,7 +7,7 @@
 
 # Fullstack Booking App
 
-A fullstack scheduling and booking system designed for service-based businesses. I built this project as a capstone project for a backend course I completed with Boot.dev. The frontend I built for the live demo version that currently only demonstarates some of the functionality of the backend. Built with Go, Supabase, and Next.js, this monorepo project allows users to view available time slots, book appointments, and manage their bookings through a sleek and responsive UI.
+A fullstack scheduling and booking system designed for service-based businesses. I built this project as a capstone project for a backend course I completed with Boot.dev. Built with Go, Supabase, and Next.js, this monorepo project allows users to view available time slots, book appointments, and manage their bookings through a sleek and responsive UI.
 
 ## 🖼 Screenshots
 
