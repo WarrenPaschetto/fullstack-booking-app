@@ -9,28 +9,12 @@
 
 A fullstack scheduling and booking system designed for service-based businesses. I built this project as a capstone project for a backend course I completed with Boot.dev. The frontend I built for the live demo version that currently only demonstarates some of the functionality of the backend. Built with Go, Supabase, and Next.js, this monorepo project allows users to view available time slots, book appointments, and manage their bookings through a sleek and responsive UI.
 
-## 🖼 Live Demo
-
-👉 [**Click here to view the live demo**](https://fullstack-booking-app-hazel.vercel.app/login)
-
-To use app as a regular "user", just register a fake name, fake email, and password. Then log in under that email and password. You should be able to see what appointment times are available to book, book an appointment, and see a list of all your booked appointments. To experience the app as an "admin", log in with the following:
-
-Email: 
-```
-admin@example.com
-```
-Password: 
-```
-yourPassword123
-```
+## 🖼 Screenshots
 
 ![Booking App Login](./frontend/public/images/demoLogin.png) 
 
 ![User Booking Page](./frontend/public/images/demoCalendar.png)
 
-> 💡 **Side Note:**  
-> There is no method to create a new admin from the frontend—this was intentional.  
-> If you really want to create an admin, use a `curl` statement in your terminal as shown in the **Testing Endpoints** section below.
 
 
 ## 🔧 Tech Stack
